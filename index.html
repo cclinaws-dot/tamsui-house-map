@@ -158,9 +158,26 @@ html_code = """<!DOCTYPE html>
         
         .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: #f8fafc; padding: 12px; border-radius: 8px; margin-bottom: 15px; }
 
-        /* 大圖檢視 Modal */
-        #imgModal { z-index: 10000; background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; }
-        #imgModal img { max-width: 90%; max-height: 90vh; border-radius: 8px; box-shadow: 0 0 20px rgba(255,255,255,0.2); }
+        /* 大圖檢視 Modal (含左右切換) */
+        #imgModal { z-index: 10000; background: rgba(0,0,0,0.88); display: none; flex-direction: column; justify-content: center; align-items: center; }
+        .img-modal-container { position: relative; display: flex; align-items: center; justify-content: center; max-width: 90%; max-height: 80vh; }
+        .img-modal-container img { max-width: 100%; max-height: 80vh; border-radius: 8px; box-shadow: 0 0 20px rgba(255,255,255,0.2); }
+        
+        .img-nav-btn {
+            position: absolute; top: 50%; transform: translateY(-50%);
+            background: rgba(0, 0, 0, 0.6); color: white; border: none;
+            font-size: 1.8rem; padding: 12px 16px; cursor: pointer; border-radius: 50%;
+            user-select: none; transition: background 0.2s;
+        }
+        .img-nav-btn:hover { background: rgba(37, 99, 235, 0.8); }
+        .img-nav-prev { left: -60px; }
+        .img-nav-next { right: -60px; }
+        @media (max-width: 768px) {
+            .img-nav-prev { left: 10px; }
+            .img-nav-next { right: 10px; }
+        }
+        .img-counter { color: white; margin-top: 15px; font-size: 0.95rem; font-weight: bold; background: rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 12px; }
+        .img-close-btn { position: absolute; top: 20px; right: 25px; color: white; font-size: 2rem; cursor: pointer; border: none; background: none; }
     </style>
 </head>
 <body>
@@ -282,12 +299,12 @@ html_code = """<!DOCTYPE html>
 
                     <div class="form-group full" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 0;">
                         <div class="form-group">
-                            <label>預估成交總價 (萬元)</label>
-                            <input type="text" id="targetPrice" placeholder="例: 980 ~ 1020 萬">
+                            <label>實價登錄行情 (萬/坪)</label>
+                            <input type="text" id="realPrice" placeholder="例: 30 ~ 33 萬/坪" oninput="autoCalcTargetPrice('new')">
                         </div>
                         <div class="form-group">
-                            <label>實價登錄行情 (萬/坪)</label>
-                            <input type="text" id="realPrice" placeholder="例: 30 ~ 33 萬/坪">
+                            <label>預估成交總價 (萬元) ⚡自動計算</label>
+                            <input type="text" id="targetPrice" placeholder="輸入行情後自動計算">
                         </div>
                     </div>
 
@@ -302,11 +319,15 @@ html_code = """<!DOCTYPE html>
 
                     <div class="form-group">
                         <label>權狀總坪數</label>
-                        <input type="number" step="0.01" id="totalPing" placeholder="例: 34.99">
+                        <input type="number" step="0.01" id="totalPing" placeholder="例: 34.99" oninput="autoCalcTargetPrice('new')">
                     </div>
                     <div class="form-group">
                         <label>主+附坪數 (室內)</label>
                         <input type="number" step="0.01" id="innerPing" placeholder="例: 15.99">
+                    </div>
+                    <div class="form-group full">
+                        <label>🚗 車位坪數</label>
+                        <input type="number" step="0.01" id="parkingPing" placeholder="例: 8.5">
                     </div>
                 </div>
 
@@ -418,8 +439,9 @@ html_code = """<!DOCTYPE html>
                             <th>型態</th>
                             <th>樓層</th>
                             <th>實登單價</th>
-                            <th>權狀總坪數</th>
-                            <th>主+附</th>
+                            <th>權狀坪數</th>
+                            <th>主+附坪數</th>
+                            <th>車位坪數</th>
                             <th>屋齡(年)</th>
                             <th>照片數</th>
                             <th>狀態</th>
@@ -444,8 +466,15 @@ html_code = """<!DOCTYPE html>
     </div>
 </div>
 
-<div class="modal-overlay" id="imgModal" onclick="closeImgModal()">
-    <img id="fullImg" src="" alt="大圖預覽">
+<!-- 🖼️ 大圖檢視 Modal (含左右切換按鈕) -->
+<div class="modal-overlay" id="imgModal">
+    <button class="img-close-btn" onclick="closeImgModal()">✕</button>
+    <div class="img-modal-container">
+        <button class="img-nav-btn img-nav-prev" onclick="prevImg(event)">◀</button>
+        <img id="fullImg" src="" alt="大圖預覽">
+        <button class="img-nav-btn img-nav-next" onclick="nextImg(event)">▶</button>
+    </div>
+    <div class="img-counter" id="imgCounter">1 / 1</div>
 </div>
 
 <!-- Leaflet JS -->
@@ -466,11 +495,12 @@ html_code = """<!DOCTYPE html>
             status: "🟡 保留觀察",
             price: 880,
             unitPrice: (880 / 31.25).toFixed(1),
-            targetPrice: "780 ~ 820 萬",
+            targetPrice: "813 ~ 906 萬",
             floor: "3F/29F (1659戶 / 8戶3梯)",
             age: 8.2,
             totalPing: 31.25,
             innerPing: 17.71,
+            parkingPing: 7.2,
             mgmtFee: 1330,
             realPrice: "26 ~ 29 萬/坪",
             images: [],
@@ -492,11 +522,12 @@ html_code = """<!DOCTYPE html>
             status: "🟡 保留觀察",
             price: 1150,
             unitPrice: (1150 / 34.99).toFixed(1),
-            targetPrice: "980 ~ 1030 萬",
+            targetPrice: "1120 ~ 1225 萬",
             floor: "14F/22F (1912戶 / 8戶3梯)",
             age: 3.0,
             totalPing: 34.99,
             innerPing: 15.99,
+            parkingPing: 9.8,
             mgmtFee: 2450,
             realPrice: "32 ~ 35 萬/坪",
             images: [],
@@ -518,11 +549,12 @@ html_code = """<!DOCTYPE html>
             status: "🟡 保留觀察",
             price: 1050,
             unitPrice: (1050 / 34.23).toFixed(1),
-            targetPrice: "930 ~ 980 萬",
+            targetPrice: "958 ~ 1061 萬",
             floor: "10F/13F (146戶 / 4戶1梯)",
             age: 19.2,
             totalPing: 34.23,
             innerPing: 17.77,
+            parkingPing: 8.5,
             mgmtFee: 2412,
             realPrice: "28 ~ 31 萬/坪",
             images: [],
@@ -544,11 +576,12 @@ html_code = """<!DOCTYPE html>
             status: "🔴 直接排除",
             price: 830,
             unitPrice: (830 / 25.1).toFixed(1),
-            targetPrice: "720 ~ 760 萬",
+            targetPrice: "703 ~ 803 萬",
             floor: "4F/6F (24戶 / 4戶1梯)",
             age: 26.2,
             totalPing: 25.10,
             innerPing: 17.31,
+            parkingPing: 5.2,
             mgmtFee: 1000,
             realPrice: "28 ~ 32 萬/坪",
             images: [],
@@ -570,11 +603,12 @@ html_code = """<!DOCTYPE html>
             status: "🟢 優先考慮",
             price: 898,
             unitPrice: (898 / 26.33).toFixed(1),
-            targetPrice: "790 ~ 830 萬",
+            targetPrice: "816 ~ 895 萬",
             floor: "2F/13F (151戶 / 3戶1梯)",
             age: 19.4,
             totalPing: 26.33,
             innerPing: 13.07,
+            parkingPing: 8.8,
             mgmtFee: 1236,
             realPrice: "31 ~ 34 萬/坪",
             images: [],
@@ -596,11 +630,12 @@ html_code = """<!DOCTYPE html>
             status: "🟢 優先考慮",
             price: 1088,
             unitPrice: (1088 / 29.09).toFixed(1),
-            targetPrice: "950 ~ 990 萬",
+            targetPrice: "989 ~ 1076 萬",
             floor: "2F/7F (100戶 / 4戶1梯)",
             age: 16.8,
             totalPing: 29.09,
             innerPing: 18.8,
+            parkingPing: 6.5,
             mgmtFee: 2538,
             realPrice: "34 ~ 37 萬/坪",
             images: [],
@@ -614,6 +649,33 @@ html_code = """<!DOCTYPE html>
     let properties = JSON.parse(localStorage.getItem('淡水看房地圖資料')) || defaultData;
     let currentFilter = 'all';
 
+    // 💡 實價登錄行情自動計算預估成交總價
+    function autoCalcTargetPrice(mode) {
+        const pingId = mode === 'new' ? 'totalPing' : 'e_totalPing';
+        const realPriceId = mode === 'new' ? 'realPrice' : 'e_realPrice';
+        const targetPriceId = mode === 'new' ? 'targetPrice' : 'e_targetPrice';
+
+        const ping = parseFloat(document.getElementById(pingId).value);
+        const realPriceStr = document.getElementById(realPriceId).value;
+
+        if (!ping || !realPriceStr) return;
+
+        // 提取數字 (可處理 "30~33", "30-33", "32.5萬/坪")
+        const nums = realPriceStr.match(/\d+(\.\d+)?/g);
+        if (!nums) return;
+
+        if (nums.length === 1) {
+            const val = Math.round(parseFloat(nums[0]) * ping);
+            document.getElementById(targetPriceId).value = val + " 萬";
+        } else if (nums.length >= 2) {
+            const val1 = Math.round(parseFloat(nums[0]) * ping);
+            const val2 = Math.round(parseFloat(nums[1]) * ping);
+            const minVal = Math.min(val1, val2);
+            const maxVal = Math.max(val1, val2);
+            document.getElementById(targetPriceId).value = `${minVal} ~ ${maxVal} 萬`;
+        }
+    }
+
     function resetTo6DefaultProperties() {
         if(confirm("確定要重置為最新表格順序與 6 個物件資料嗎？這將覆蓋舊的瀏覽器紀錄！")) {
             localStorage.removeItem('淡水看房地圖資料');
@@ -625,6 +687,10 @@ html_code = """<!DOCTYPE html>
 
     let newTempImages = [];
     let editTempImages = [];
+
+    // 大圖切換全域變數
+    let currentGalleryImages = [];
+    let currentImgIndex = 0;
 
     let map, mapMarkers = [];
     let tempMarker = null;
@@ -704,6 +770,7 @@ html_code = """<!DOCTYPE html>
                     <td>${p.realPrice || '-'}</td>
                     <td>${p.totalPing ? p.totalPing + '坪' : '-'}</td>
                     <td>${p.innerPing ? p.innerPing + '坪' : '-'}</td>
+                    <td>${p.parkingPing ? p.parkingPing + '坪' : '-'}</td>
                     <td>${p.age ? p.age + '年' : '-'}</td>
                     <td>${imgCount > 0 ? '📷 ' + imgCount + '張' : '無'}</td>
                     <td>${p.status}</td>
@@ -804,21 +871,60 @@ html_code = """<!DOCTYPE html>
         targetArray.forEach((imgData, i) => {
             grid.innerHTML += `
                 <div class="img-thumb-wrap">
-                    <img src="${imgData}" onclick="openImgModal('${imgData}')">
+                    <img src="${imgData}" onclick="openImgGalleryModal(${i}, '${mode}')">
                     <button class="btn-del-img" type="button" onclick="removeTempImage(${i}, '${mode}')">✕</button>
                 </div>
             `;
         });
     }
 
-    function openImgModal(src) {
-        document.getElementById('fullImg').src = src;
+    // 🖼️ 開啟照片輪播燈箱
+    function openImgGalleryModal(index, source, propertyIndex) {
+        if (source === 'new') {
+            currentGalleryImages = newTempImages;
+        } else if (source === 'edit') {
+            currentGalleryImages = editTempImages;
+        } else if (source === 'detail') {
+            currentGalleryImages = properties[propertyIndex].images || [];
+        }
+
+        if (currentGalleryImages.length === 0) return;
+
+        currentImgIndex = index;
+        updateGalleryView();
         document.getElementById('imgModal').style.display = 'flex';
+    }
+
+    function updateGalleryView() {
+        document.getElementById('fullImg').src = currentGalleryImages[currentImgIndex];
+        document.getElementById('imgCounter').innerText = `${currentImgIndex + 1} / ${currentGalleryImages.length}`;
+    }
+
+    function prevImg(e) {
+        if (e) e.stopPropagation();
+        currentImgIndex = (currentImgIndex - 1 + currentGalleryImages.length) % currentGalleryImages.length;
+        updateGalleryView();
+    }
+
+    function nextImg(e) {
+        if (e) e.stopPropagation();
+        currentImgIndex = (currentImgIndex + 1) % currentGalleryImages.length;
+        updateGalleryView();
     }
 
     function closeImgModal() {
         document.getElementById('imgModal').style.display = 'none';
     }
+
+    // 鍵盤左右鍵控制照片
+    document.addEventListener('keydown', function(e) {
+        const modal = document.getElementById('imgModal');
+        if (modal && modal.style.display === 'flex') {
+            if (e.key === 'ArrowLeft') prevImg();
+            if (e.key === 'ArrowRight') nextImg();
+            if (e.key === 'Escape') closeImgModal();
+        }
+    });
 
     function showDetail(index) {
         const p = properties[index];
@@ -833,7 +939,7 @@ html_code = """<!DOCTYPE html>
             : '<span style="color:#22c55e;">🟢 無明顯重大抗性</span>';
 
         let imgsHtml = p.images && p.images.length > 0
-            ? p.images.map(img => `<div class="img-thumb-wrap"><img src="${img}" onclick="openImgModal('${img}')"></div>`).join('')
+            ? p.images.map((img, i) => `<div class="img-thumb-wrap"><img src="${img}" onclick="openImgGalleryModal(${i}, 'detail', ${index})"></div>`).join('')
             : '<span style="color:#64748b; font-size:0.85rem;">未上傳現場照片</span>';
 
         const stars = "⭐".repeat(parseInt(p.rating) || 1);
@@ -857,11 +963,12 @@ html_code = """<!DOCTYPE html>
                 <div><b>預估管理費：</b> ${p.mgmtFee ? p.mgmtFee + ' 元/月' : '未填'}</div>
                 <div><b>權狀總坪數：</b> ${p.totalPing} 坪</div>
                 <div><b>主+附 (室內)：</b> ${p.innerPing} 坪</div>
+                <div><b>🚗 車位坪數：</b> ${p.parkingPing ? p.parkingPing + ' 坪' : '未填'}</div>
                 <div><b>地圖座標：</b> ${p.lat}, ${p.lng}</div>
             </div>
 
             <div style="margin-bottom:15px;">
-                <b>📷 現場照片/格局圖 (點擊檢視大圖)：</b>
+                <b>📷 現場照片/格局圖 (點擊開啟圖片輪播)：</b>
                 <div class="image-preview-grid" style="margin-top:5px;">${imgsHtml}</div>
             </div>
 
@@ -985,15 +1092,16 @@ html_code = """<!DOCTYPE html>
                 </div>
 
                 <div class="form-group full" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 0;">
-                    <div class="form-group"><label>預估成交總價 (萬)</label><input type="text" id="e_targetPrice" value="${p.targetPrice || ''}"></div>
-                    <div class="form-group"><label>實價登錄行情 (萬/坪)</label><input type="text" id="e_realPrice" value="${p.realPrice || ''}"></div>
+                    <div class="form-group"><label>實價登錄行情 (萬/坪)</label><input type="text" id="e_realPrice" value="${p.realPrice || ''}" oninput="autoCalcTargetPrice('edit')"></div>
+                    <div class="form-group"><label>預估成交總價 (萬) ⚡自動計算</label><input type="text" id="e_targetPrice" value="${p.targetPrice || ''}"></div>
                 </div>
 
                 <div class="form-group"><label>屋齡 (年)</label><input type="number" step="0.1" id="e_age" value="${p.age || ''}"></div>
                 <div class="form-group"><label>預估房屋管理費 (元/月)</label><input type="number" id="e_mgmtFee" value="${p.mgmtFee || ''}"></div>
 
-                <div class="form-group"><label>權狀坪數</label><input type="number" step="0.01" id="e_totalPing" value="${p.totalPing || ''}"></div>
+                <div class="form-group"><label>權狀坪數</label><input type="number" step="0.01" id="e_totalPing" value="${p.totalPing || ''}" oninput="autoCalcTargetPrice('edit')"></div>
                 <div class="form-group"><label>主+附坪數</label><input type="number" step="0.01" id="e_innerPing" value="${p.innerPing || ''}"></div>
+                <div class="form-group full"><label>🚗 車位坪數</label><input type="number" step="0.01" id="e_parkingPing" value="${p.parkingPing || ''}"></div>
             </div>
 
             <div class="form-group" style="margin-top:10px;">
@@ -1047,6 +1155,7 @@ html_code = """<!DOCTYPE html>
         properties[index].age = document.getElementById('e_age').value;
         properties[index].totalPing = document.getElementById('e_totalPing').value;
         properties[index].innerPing = document.getElementById('e_innerPing').value;
+        properties[index].parkingPing = document.getElementById('e_parkingPing').value;
         properties[index].mgmtFee = document.getElementById('e_mgmtFee').value;
         properties[index].realPrice = document.getElementById('e_realPrice').value;
         properties[index].images = [...editTempImages];
@@ -1085,6 +1194,7 @@ html_code = """<!DOCTYPE html>
             age: document.getElementById('age').value,
             totalPing: document.getElementById('totalPing').value,
             innerPing: document.getElementById('innerPing').value,
+            parkingPing: document.getElementById('parkingPing').value,
             mgmtFee: document.getElementById('mgmtFee').value,
             realPrice: document.getElementById('realPrice').value,
             images: [...newTempImages],
@@ -1110,12 +1220,12 @@ html_code = """<!DOCTYPE html>
     }
 
     function exportCSV() {
-        let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
-        csvContent += "導覽圖編號,綜合評分(星級),物件名稱,開價總價(萬),格局,登記用途,型態,樓層,實價登錄行情(萬/坪),權狀總坪數,主加附坪數,屋齡(年),換算開價單價(萬/坪),照片數量,評估狀態,地址,車位類型,朝向,預估成交總價(萬),管理費(元/月),優點亮點,抗性缺點,備註,緯度,經度\n";
+        let csvContent = "data:text/csv;charset=utf-8,\\uFEFF";
+        csvContent += "導覽圖編號,綜合評分(星級),物件名稱,開價總價(萬),格局,登記用途,型態,樓層,實價登錄行情(萬/坪),權狀總坪數,主加附坪數,車位坪數,屋齡(年),換算開價單價(萬/坪),照片數量,評估狀態,地址,車位類型,朝向,預估成交總價(萬),管理費(元/月),優點亮點,抗性缺點,備註,緯度,經度\\n";
         
         properties.forEach(p => {
             const imgCount = p.images ? p.images.length + '張' : '0張';
-            csvContent += `"${p.code}","${p.rating || '0'}星","${p.name}","${p.price}","${p.layout || ''}","${p.purpose || ''}","${p.type || ''}","${p.floor || ''}","${p.realPrice || ''}","${p.totalPing || ''}","${p.innerPing || ''}","${p.age || ''}","${p.unitPrice || ''}","${imgCount}","${p.status}","${p.address || ''}","${p.parkingType || ''}","${p.orientation || ''}","${p.targetPrice || ''}","${p.mgmtFee || ''}","${(p.pros||[]).join(';')}","${(p.cons||[]).join(';')}","${p.notes}","${p.lat}","${p.lng}"\n`;
+            csvContent += `"${p.code}","${p.rating || '0'}星","${p.name}","${p.price}","${p.layout || ''}","${p.purpose || ''}","${p.type || ''}","${p.floor || ''}","${p.realPrice || ''}","${p.totalPing || ''}","${p.innerPing || ''}","${p.parkingPing || ''}","${p.age || ''}","${p.unitPrice || ''}","${imgCount}","${p.status}","${p.address || ''}","${p.parkingType || ''}","${p.orientation || ''}","${p.targetPrice || ''}","${p.mgmtFee || ''}","${(p.pros||[]).join(';')}","${(p.cons||[]).join(';')}","${p.notes}","${p.lat}","${p.lng}"\\n`;
         });
 
         const encodedUri = encodeURI(csvContent);
