@@ -432,7 +432,7 @@ html_code = """<!DOCTYPE html>
                     <thead>
                         <tr>
                             <th>編號</th>
-                            <th>評價</th>
+                            <th>評價 / 狀態</th>
                             <th>名稱</th>
                             <th>開價總價</th>
                             <th>格局</th>
@@ -444,7 +444,6 @@ html_code = """<!DOCTYPE html>
                             <th>車位坪數</th>
                             <th>屋齡(年)</th>
                             <th>照片數</th>
-                            <th>狀態</th>
                             <th>操作</th>
                         </tr>
                     </thead>
@@ -761,7 +760,10 @@ html_code = """<!DOCTYPE html>
             tbody.innerHTML += `
                 <tr>
                     <td><b>${p.code}</b></td>
-                    <td style="color:#d97706; font-weight:bold;">${stars}</td>
+                    <td style="line-height:1.4;">
+                        <span style="color:#d97706; font-weight:bold;">${stars}</span><br>
+                        <span style="font-size:0.78rem; color:#475569;">${p.status || '-'}</span>
+                    </td>
                     <td>${p.name}</td>
                     <td><b>${p.price}萬</b></td>
                     <td>${p.layout || '-'}</td>
@@ -773,7 +775,6 @@ html_code = """<!DOCTYPE html>
                     <td>${p.parkingPing ? p.parkingPing + '坪' : '-'}</td>
                     <td>${p.age ? p.age + '年' : '-'}</td>
                     <td>${imgCount > 0 ? '📷 ' + imgCount + '張' : '無'}</td>
-                    <td>${p.status}</td>
                     <td>
                         <button onclick="showDetail(${originalIndex})" class="btn btn-detail">🔍 詳情/編輯</button>
                         <button onclick="deleteItem(${originalIndex})" class="btn btn-danger">刪除</button>
