@@ -311,7 +311,7 @@ html_code = """<!DOCTYPE html>
                 </div>
 
                 <div class="form-group" style="margin-top:8px;">
-                    <label>📷 上傳現場照片 (可選取最多 10 張照片/格局圖)</label>
+                    <label>📷 上傳現場照片 (可選取最多 15 張照片/格局圖)</label>
                     <input type="file" id="imageInput" accept="image/*" multiple onchange="handleImageUpload(event, 'new')">
                     <div class="image-preview-grid" id="newImagePreviewGrid"></div>
                 </div>
@@ -749,11 +749,11 @@ html_code = """<!DOCTYPE html>
         const files = Array.from(event.target.files);
         let targetArray = mode === 'new' ? newTempImages : editTempImages;
 
-        if (targetArray.length + files.length > 10) {
-            alert("照片上限為 10 張，已自動選取前 10 張！");
+        if (targetArray.length + files.length > 15) {
+            alert("照片上限為 15 張，已自動選取前 15 張！");
         }
 
-        const remainingSlots = 10 - targetArray.length;
+        const remainingSlots = 15 - targetArray.length;
         const filesToProcess = files.slice(0, remainingSlots);
 
         filesToProcess.forEach(file => {
