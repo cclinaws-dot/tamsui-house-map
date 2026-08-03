@@ -459,7 +459,11 @@
             if (response.ok) {
                 const data = await response.json();
                 fileSHA = data.sha;
-                const content = decodeURIComponent(escape(atob(data.content)));
+                // 正確解碼 Base64 UTF-8
+                const binaryStr = atob(data.content.replace(/\s/g, ''));
+                const bytes = Uint8Array.from(binaryStr, c => c.charCodeAt(0));
+                const content = new TextDecoder('utf-8').decode(bytes);
+                
                 properties = JSON.parse(content);
                 statusEl.innerText = "🟢 雲端同步連線正常 (來自 GitHub)";
                 statusEl.style.color = "#166534";
@@ -475,6 +479,7 @@
             properties = JSON.parse(localStorage.getItem('淡水看房地圖資料')) || [];
         }
         render();
+    }
     }
 
     async function pushToGitHub() {
