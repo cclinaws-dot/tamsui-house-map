@@ -252,17 +252,20 @@
                         <input type="number" id="mgmtFee" placeholder="例: 2450">
                     </div>
 
-                    <div class="form-group">
-                        <label>權狀總坪數</label>
-                        <input type="number" step="0.01" id="totalPing" placeholder="例: 34.99" oninput="autoCalcTargetPrice('new')">
-                    </div>
-                    <div class="form-group">
-                        <label>主+附坪數 (室內)</label>
-                        <input type="number" step="0.01" id="innerPing" placeholder="例: 15.99">
-                    </div>
-                    <div class="form-group full">
-                        <label>🚗 車位坪數</label>
-                        <input type="number" step="0.01" id="parkingPing" placeholder="例: 8.5">
+                    <!-- 📐 坪數三個欄位併為一列 (3欄式) -->
+                    <div class="form-group full" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 0;">
+                        <div class="form-group">
+                            <label>權狀總坪數</label>
+                            <input type="number" step="0.01" id="totalPing" placeholder="例: 34.99" oninput="autoCalcTargetPrice('new')">
+                        </div>
+                        <div class="form-group">
+                            <label>主+附坪數 (室內)</label>
+                            <input type="number" step="0.01" id="innerPing" placeholder="例: 15.99">
+                        </div>
+                        <div class="form-group">
+                            <label>🚗 車位坪數</label>
+                            <input type="number" step="0.01" id="parkingPing" placeholder="例: 8.5">
+                        </div>
                     </div>
                 </div>
 
@@ -954,9 +957,12 @@
                 <div class="form-group"><label>屋齡 (年)</label><input type="number" step="0.1" id="e_age" value="${p.age || ''}"></div>
                 <div class="form-group"><label>預估房屋管理費 (元/月)</label><input type="number" id="e_mgmtFee" value="${p.mgmtFee || ''}"></div>
 
-                <div class="form-group"><label>權狀坪數</label><input type="number" step="0.01" id="e_totalPing" value="${p.totalPing || ''}" oninput="autoCalcTargetPrice('edit')"></div>
-                <div class="form-group"><label>主+附坪數</label><input type="number" step="0.01" id="e_innerPing" value="${p.innerPing || ''}"></div>
-                <div class="form-group full"><label>🚗 車位坪數</label><input type="number" step="0.01" id="e_parkingPing" value="${p.parkingPing || ''}"></div>
+                <!-- 📐 編輯 modal 坪數三個欄位併為一列 (3欄式) -->
+                <div class="form-group full" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 0;">
+                    <div class="form-group"><label>權狀總坪數</label><input type="number" step="0.01" id="e_totalPing" value="${p.totalPing || ''}" oninput="autoCalcTargetPrice('edit')"></div>
+                    <div class="form-group"><label>主+附坪數 (室內)</label><input type="number" step="0.01" id="e_innerPing" value="${p.innerPing || ''}"></div>
+                    <div class="form-group"><label>🚗 車位坪數</label><input type="number" step="0.01" id="e_parkingPing" value="${p.parkingPing || ''}"></div>
+                </div>
             </div>
 
             <div class="form-group" style="margin-top:10px;">
