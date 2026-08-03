@@ -25,6 +25,12 @@
         .card { background: white; border-radius: 12px; padding: 18px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); margin-bottom: 15px; }
         h2 { margin-top: 0; font-size: 1.15rem; color: #1e293b; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px; }
 
+        /* GitHub 設定區塊 */
+        .github-config {
+            background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 12px; margin-bottom: 15px; font-size: 0.85rem;
+        }
+        .sync-status { display: inline-block; font-weight: bold; margin-left: 10px; }
+
         /* 地圖容器 */
         #map { width: 100%; height: 750px; border-radius: 8px; border: 1px solid #cbd5e1; }
 
@@ -33,7 +39,7 @@
         .form-group { margin-bottom: 10px; }
         .form-group.full { grid-column: span 2; }
         label { font-size: 0.82rem; font-weight: 600; display: block; margin-bottom: 4px; color: #475569; }
-        input[type="text"], input[type="number"], input[type="date"], select, textarea { 
+        input[type="text"], input[type="number"], input[type="date"], select, textarea, input[type="password"] { 
             width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.88rem; outline: none;
         }
         input:focus, select:focus, textarea:focus { border-color: var(--primary); }
@@ -43,87 +49,26 @@
         .filter-btn { background: #f1f5f9; border: 1px solid #cbd5e1; padding: 5px 10px; border-radius: 6px; font-size: 0.8rem; cursor: pointer; font-weight: 600; color: #475569; }
         .filter-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
 
-        /* 照片上傳與預覽區 */
-        .image-preview-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
-            gap: 8px;
-            margin-top: 8px;
-        }
-        .img-thumb-wrap {
-            position: relative;
-            width: 70px;
-            height: 70px;
-            border-radius: 6px;
-            overflow: hidden;
-            border: 1px solid #cbd5e1;
-        }
-        .img-thumb-wrap img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            cursor: pointer;
-        }
-        .img-thumb-wrap .btn-del-img {
-            position: absolute;
-            top: 2px;
-            right: 2px;
-            background: rgba(239, 68, 68, 0.85);
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 18px;
-            height: 18px;
-            font-size: 10px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
+        /* 照片預覽 */
+        .image-preview-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)); gap: 8px; margin-top: 8px; }
+        .img-thumb-wrap { position: relative; width: 70px; height: 70px; border-radius: 6px; overflow: hidden; border: 1px solid #cbd5e1; }
+        .img-thumb-wrap img { width: 100%; height: 100%; object-fit: cover; cursor: pointer; }
+        .img-thumb-wrap .btn-del-img { position: absolute; top: 2px; right: 2px; background: rgba(239, 68, 68, 0.85); color: white; border: none; border-radius: 50%; width: 18px; height: 18px; font-size: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
 
-        /* 優缺點勾選區美化 */
-        .checklist-container {
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            padding: 12px;
-            max-height: 200px;
-            overflow-y: auto;
-        }
-        .checklist-container.pros-bg {
-            background: #f0fdf4;
-            border-color: #bbf7d0;
-        }
-        .category-title {
-            font-size: 0.8rem;
-            font-weight: bold;
-            color: var(--primary);
-            margin: 8px 0 4px 0;
-            border-bottom: 1px dashed #cbd5e1;
-            padding-bottom: 2px;
-        }
+        /* 優缺點勾選區 */
+        .checklist-container { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; max-height: 200px; overflow-y: auto; }
+        .checklist-container.pros-bg { background: #f0fdf4; border-color: #bbf7d0; }
+        .category-title { font-size: 0.8rem; font-weight: bold; color: var(--primary); margin: 8px 0 4px 0; border-bottom: 1px dashed #cbd5e1; padding-bottom: 2px; }
         .category-title.pros-title { color: #166534; border-color: #86efac; }
         .category-title:first-child { margin-top: 0; }
         
-        .checklist-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 6px 10px;
-        }
-        .check-item {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            font-size: 0.8rem;
-            color: #334155;
-            cursor: pointer;
-        }
+        .checklist-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 6px 10px; }
+        .check-item { display: flex; align-items: center; gap: 5px; font-size: 0.8rem; color: #334155; cursor: pointer; }
         .check-item input[type="checkbox"] { width: 15px; height: 15px; accent-color: var(--primary); }
         .check-item.pro-item input[type="checkbox"] { accent-color: var(--success); }
 
         .btn { background: var(--primary); color: white; border: none; padding: 10px 14px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 0.9rem; }
         .btn-export { background: #475569; margin-top: 8px; width: 100%; }
-        .btn-reset { background: #64748b; padding: 6px 12px; font-size: 0.8rem; border-radius: 6px; color: white; border: none; cursor: pointer; }
         .btn-detail { background: #0284c7; padding: 4px 8px; font-size: 0.8rem; }
         .btn-edit { background: #eab308; padding: 6px 12px; font-size: 0.85rem; }
         .btn-save { background: #22c55e; padding: 6px 12px; font-size: 0.85rem; }
@@ -133,49 +78,25 @@
         th, td { border: 1px solid #e2e8f0; padding: 8px; text-align: left; }
         th { background: #f8fafc; white-space: nowrap; }
 
-        .custom-marker {
-            display: flex; align-items: center; justify-content: center;
-            color: white; font-weight: bold; font-size: 11px;
-            border-radius: 50%; border: 2px solid white;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.4);
-        }
+        .custom-marker { display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 11px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.4); }
 
-        /* 物件詳情 Modal 樣式 */
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5); display: none;
-            justify-content: center; align-items: center; z-index: 9999;
-        }
-        .modal-content {
-            background: white; width: 90%; max-width: 680px; border-radius: 12px;
-            padding: 24px; max-height: 85vh; overflow-y: auto; box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-        }
+        /* Modal */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 9999; }
+        .modal-content { background: white; width: 90%; max-width: 680px; border-radius: 12px; padding: 24px; max-height: 85vh; overflow-y: auto; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
         .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f1f5f9; padding-bottom: 12px; }
         .modal-body { margin-top: 15px; font-size: 0.92rem; line-height: 1.6; }
         
         .tag-pro { display: inline-block; background: #dcfce7; color: #166534; padding: 3px 8px; border-radius: 4px; font-size: 0.8rem; margin: 3px; border: 1px solid #86efac; }
         .tag-con { display: inline-block; background: #fee2e2; color: #991b1b; padding: 3px 8px; border-radius: 4px; font-size: 0.8rem; margin: 3px; border: 1px solid #fca5a5; }
-        
         .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: #f8fafc; padding: 12px; border-radius: 8px; margin-bottom: 15px; }
 
-        /* 大圖檢視 Modal (含左右切換) */
+        /* 大圖 Modal */
         #imgModal { z-index: 10000; background: rgba(0,0,0,0.88); display: none; flex-direction: column; justify-content: center; align-items: center; }
         .img-modal-container { position: relative; display: flex; align-items: center; justify-content: center; max-width: 90%; max-height: 80vh; }
         .img-modal-container img { max-width: 100%; max-height: 80vh; border-radius: 8px; box-shadow: 0 0 20px rgba(255,255,255,0.2); }
-        
-        .img-nav-btn {
-            position: absolute; top: 50%; transform: translateY(-50%);
-            background: rgba(0, 0, 0, 0.6); color: white; border: none;
-            font-size: 1.8rem; padding: 12px 16px; cursor: pointer; border-radius: 50%;
-            user-select: none; transition: background 0.2s;
-        }
-        .img-nav-btn:hover { background: rgba(37, 99, 235, 0.8); }
-        .img-nav-prev { left: -60px; }
-        .img-nav-next { right: -60px; }
-        @media (max-width: 768px) {
-            .img-nav-prev { left: 10px; }
-            .img-nav-next { right: 10px; }
-        }
+        .img-nav-btn { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(0, 0, 0, 0.6); color: white; border: none; font-size: 1.8rem; padding: 12px 16px; cursor: pointer; border-radius: 50%; user-select: none; }
+        .img-nav-prev { left: -60px; } .img-nav-next { right: -60px; }
+        @media (max-width: 768px) { .img-nav-prev { left: 10px; } .img-nav-next { right: 10px; } }
         .img-counter { color: white; margin-top: 15px; font-size: 0.95rem; font-weight: bold; background: rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 12px; }
         .img-close-btn { position: absolute; top: 20px; right: 25px; color: white; font-size: 2rem; cursor: pointer; border: none; background: none; }
     </style>
@@ -184,7 +105,6 @@
 
 <div class="header">
     <h1>🗺️ 淡水 - 電子互動地圖看房系統</h1>
-    <button onclick="resetTo6DefaultProperties()" class="btn-reset" style="position: absolute; right: 0; top: 5px;">🧹 點此載入/重置 6 個案件資料</button>
 </div>
 
 <div class="main-layout">
@@ -196,6 +116,18 @@
 
     <!-- 右側：完整表單與資料庫 -->
     <div>
+        <!-- ☁️ GitHub 雲端同步設定與狀態槓 -->
+        <div class="github-config">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <b>☁️ GitHub 雲端雲端資料庫狀態：</b>
+                <span class="sync-status" id="syncStatus">🔍 讀取雲端資料中...</span>
+            </div>
+            <div style="display: flex; gap: 8px;">
+                <input type="password" id="githubToken" placeholder="第一次使用請貼入 GitHub Personal Token (ghp_...)" style="flex:1;">
+                <button onclick="saveToken()" class="btn" style="padding: 6px 12px; font-size: 0.8rem;">💾 儲存 Key</button>
+            </div>
+        </div>
+
         <div class="card">
             <h2>📝 新增物件紀錄</h2>
             <form id="houseForm" onsubmit="saveProperty(event)">
@@ -410,14 +342,13 @@
                 <input type="hidden" id="lat">
                 <input type="hidden" id="lng">
 
-                <button type="submit" class="btn" style="width:100%;">💾 儲存物件紀錄</button>
+                <button type="submit" class="btn" style="width:100%;">💾 儲存物件紀錄 (同步至 GitHub)</button>
             </form>
         </div>
 
         <div class="card">
             <h2>📋 已紀錄物件資料庫</h2>
             
-            <!-- 🔍 星級快速篩選與排序區 -->
             <div class="filter-bar">
                 <span style="font-size:0.82rem; font-weight:bold; color:#475569;">⭐ 依評分快速篩選：</span>
                 <button class="filter-btn active" onclick="setFilter('all', this)">全部顯示</button>
@@ -465,7 +396,6 @@
     </div>
 </div>
 
-<!-- 🖼️ 大圖檢視 Modal (含左右切換按鈕) -->
 <div class="modal-overlay" id="imgModal">
     <button class="img-close-btn" onclick="closeImgModal()">✕</button>
     <div class="img-modal-container">
@@ -480,175 +410,119 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <script>
-    const defaultData = [
-        {
-            code: "#01",
-            rating: "3",
-            name: "海洋都心二期 - 兩房即可入住",
-            address: "新北市淡水區新市三路二段281號3樓",
-            layout: "2房2廳1衛",
-            purpose: "住家用",
-            type: "社區大樓",
-            parkingType: "坡道機械",
-            orientation: "朝西/西北",
-            status: "🟡 保留觀察",
-            price: 880,
-            unitPrice: (880 / 31.25).toFixed(1),
-            targetPrice: "813 ~ 906 萬",
-            floor: "3F/29F (1659戶 / 8戶3梯)",
-            age: 8.2,
-            totalPing: 31.25,
-            innerPing: 17.71,
-            parkingPing: 7.2,
-            mgmtFee: 1330,
-            realPrice: "26 ~ 29 萬/坪",
-            images: [],
-            pros: ["屋況維持佳免大整理", "24H管理/垃圾集中", "生活機能極佳"],
-            cons: ["低樓層(採光/噪音/隱私)", "嚴重西曬", "機械/昇降車位", "梯戶比過高"],
-            notes: "一層三戶單純結構區域，樓下商圈店家多生活機能便利，公設齊全。車位 B5-247 (坡道機械)。注意 3 樓低樓層與西曬問題。",
-            lat: 25.1978, lng: 121.4321
-        },
-        {
-            code: "#02",
-            rating: "4",
-            name: "名軒海樂地 - 面中庭美兩房車",
-            address: "新北市淡水區沙崙路二段863號14樓",
-            layout: "2房2廳1衛",
-            purpose: "集合住宅",
-            type: "社區大樓",
-            parkingType: "坡道平面",
-            orientation: "朝南/西南",
-            status: "🟡 保留觀察",
-            price: 1150,
-            unitPrice: (1150 / 34.99).toFixed(1),
-            targetPrice: "1120 ~ 1225 萬",
-            floor: "14F/22F (1912戶 / 8戶3梯)",
-            age: 3.0,
-            totalPing: 34.99,
-            innerPing: 15.99,
-            parkingPing: 9.8,
-            mgmtFee: 2450,
-            realPrice: "32 ~ 35 萬/坪",
-            images: [],
-            pros: ["近輕軌/公車站", "坡道平面車位", "24H管理/垃圾集中"],
-            cons: ["房間過小(放不下雙人床)", "梯戶比過高"],
-            notes: "鄰近淡海輕軌崁頂站，社區公設齊全。車位號碼 B4-311。總戶數高達 1912 戶，戶數較多。",
-            lat: 25.2018, lng: 121.4325
-        },
-        {
-            code: "#03",
-            rating: "5",
-            name: "安家帝景 - 球場綠景衛浴開窗兩房車",
-            address: "新北市淡水區沙崙路216巷70號10樓",
-            layout: "2房2廳1衛",
-            purpose: "住家用",
-            type: "社區大樓",
-            parkingType: "坡道平面",
-            orientation: "朝東/東南",
-            status: "🟡 保留觀察",
-            price: 1050,
-            unitPrice: (1050 / 34.23).toFixed(1),
-            targetPrice: "958 ~ 1061 萬",
-            floor: "10F/13F (146戶 / 4戶1梯)",
-            age: 19.2,
-            totalPing: 34.23,
-            innerPing: 17.77,
-            parkingPing: 8.5,
-            mgmtFee: 2412,
-            realPrice: "28 ~ 31 萬/坪",
-            images: [],
-            pros: ["採光明亮/通風佳", "衛浴皆有開窗", "景觀極佳/棟距大", "坡道平面車位", "低公設比/室內大", "24H管理/垃圾集中"],
-            cons: [],
-            notes: "低公設比約 28.22%。社區總戶數 146 戶單純，雙面採光、衛浴大面開窗。車位號碼 B2-30。",
-            lat: 25.1912, lng: 121.4368
-        },
-        {
-            code: "#04",
-            rating: "1",
-            name: "高爾夫山莊 - 專約低總價稀有華廈2房車",
-            address: "新北市淡水區新民街322巷4號4樓",
-            layout: "2房2廳1衛",
-            purpose: "住家用",
-            type: "華廈",
-            parkingType: "升降機械",
-            orientation: "朝南/西南",
-            status: "🔴 直接排除",
-            price: 830,
-            unitPrice: (830 / 25.1).toFixed(1),
-            targetPrice: "703 ~ 803 萬",
-            floor: "4F/6F (24戶 / 4戶1梯)",
-            age: 26.2,
-            totalPing: 25.10,
-            innerPing: 17.31,
-            parkingPing: 5.2,
-            mgmtFee: 1000,
-            realPrice: "28 ~ 32 萬/坪",
-            images: [],
-            pros: ["採光明亮/通風佳", "低公設比/室內大"],
-            cons: ["華廈無管理員", "機械/昇降車位"],
-            notes: "總戶數 24 戶華廈，低公設大格局，門口有公車站，附一個機械車位 (0002)。管理費每月 1000 元。",
-            lat: 25.1802, lng: 121.4445
-        },
-        {
-            code: "#05",
-            rating: "4",
-            name: "真善美 - 新市鎮蛋黃區真善美一房車",
-            address: "新北市淡水區新市一路三段8號2樓",
-            layout: "1房1廳1衛",
-            purpose: "住家用",
-            type: "社區大樓",
-            parkingType: "坡道平面",
-            orientation: "朝南/西南",
-            status: "🟢 優先考慮",
-            price: 898,
-            unitPrice: (898 / 26.33).toFixed(1),
-            targetPrice: "816 ~ 895 萬",
-            floor: "2F/13F (151戶 / 3戶1梯)",
-            age: 19.4,
-            totalPing: 26.33,
-            innerPing: 13.07,
-            parkingPing: 8.8,
-            mgmtFee: 1236,
-            realPrice: "31 ~ 34 萬/坪",
-            images: [],
-            pros: ["近輕軌/公車站", "坡道平面車位", "24H管理/垃圾集中", "生活機能極佳"],
-            cons: ["低樓層(採光/噪音/隱私)"],
-            notes: "蛋黃區稀有釋出，鄰近行政中心、家樂福商圈與小叢林。坡道平面車位 B3-45。管理費每月 1236 元。",
-            lat: 25.1895, lng: 121.4428
-        },
-        {
-            code: "#06",
-            rating: "5",
-            name: "三荷院 - 錯過難等 低公設稀有兩房車",
-            address: "新北市淡水區淡北新路192號2樓",
-            layout: "2房2廳2衛",
-            purpose: "住家用",
-            type: "華廈",
-            parkingType: "坡道機械",
-            orientation: "朝南/西南",
-            status: "🟢 優先考慮",
-            price: 1088,
-            unitPrice: (1088 / 29.09).toFixed(1),
-            targetPrice: "989 ~ 1076 萬",
-            floor: "2F/7F (100戶 / 4戶1梯)",
-            age: 16.8,
-            totalPing: 29.09,
-            innerPing: 18.8,
-            parkingPing: 6.5,
-            mgmtFee: 2538,
-            realPrice: "34 ~ 37 萬/坪",
-            images: [],
-            pros: ["採光明亮/通風佳", "衛浴皆有開窗", "低公設比/室內大", "近輕軌/公車站"],
-            cons: ["低樓層(採光/噪音/隱私)", "機械/昇降車位"],
-            notes: "鄰近輕軌淡金北新站，兩房少見雙衛浴皆開窗！格局方正採光明亮，鄰近淡江大學與北新商圈。車位 B1-14 (坡道機械)。",
-            lat: 25.1821, lng: 121.4491
-        }
-    ];
+    // GitHub API 自動同步參數設定
+    const GITHUB_REPO = "cclinaws/tamsui-house-map";
+    const GITHUB_FILE_PATH = "data.json";
 
-    let properties = JSON.parse(localStorage.getItem('淡水看房地圖資料')) || defaultData;
+    let properties = [];
+    let fileSHA = ""; // GitHub API 需要的 SHA 防鎖死校驗
     let currentFilter = 'all';
 
-    // 💡 實價登錄行情自動計算預估成交總價
+    let newTempImages = [];
+    let editTempImages = [];
+    let currentGalleryImages = [];
+    let currentImgIndex = 0;
+    let map, mapMarkers = [];
+    let tempMarker = null;
+
+    // 初始化讀取 GitHub Token
+    document.addEventListener("DOMContentLoaded", function() {
+        const savedToken = localStorage.getItem('github_token');
+        if (savedToken) {
+            document.getElementById('githubToken').value = savedToken;
+        }
+        fetchGitHubData();
+    });
+
+    function saveToken() {
+        const token = document.getElementById('githubToken').value.trim();
+        if (token) {
+            localStorage.setItem('github_token', token);
+            alert("Token 已被成功寫入瀏覽器快取！");
+            fetchGitHubData();
+        }
+    }
+
+    // ☁️ 從 GitHub 讀取雲端 data.json
+    async function fetchGitHubData() {
+        const statusEl = document.getElementById('syncStatus');
+        statusEl.innerText = "⏳ 正在讀取雲端資料...";
+        statusEl.style.color = "#2563eb";
+
+        try {
+            const token = localStorage.getItem('github_token');
+            const headers = token ? { 'Authorization': `token ${token}` } : {};
+
+            const response = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/${GITHUB_FILE_PATH}`, { headers });
+            if (response.ok) {
+                const data = await response.json();
+                fileSHA = data.sha;
+                const content = decodeURIComponent(escape(atob(data.content)));
+                properties = JSON.parse(content);
+                statusEl.innerText = "🟢 雲端同步連線正常 (來自 GitHub)";
+                statusEl.style.color = "#166534";
+            } else {
+                statusEl.innerText = "⚠️ 未連線 GitHub，使用本地備份模式";
+                statusEl.style.color = "#d97706";
+                properties = JSON.parse(localStorage.getItem('淡水看房地圖資料')) || [];
+            }
+        } catch (e) {
+            console.error(e);
+            statusEl.innerText = "❌ 雲端抓取失敗";
+            statusEl.style.color = "#dc2626";
+            properties = JSON.parse(localStorage.getItem('淡水看房地圖資料')) || [];
+        }
+        render();
+    }
+
+    // ☁️ 上傳推送資料至 GitHub
+    async function pushToGitHub() {
+        const token = localStorage.getItem('github_token');
+        const statusEl = document.getElementById('syncStatus');
+
+        // 先更新本地備份
+        localStorage.setItem('淡水看房地圖資料', JSON.stringify(properties));
+
+        if (!token) {
+            statusEl.innerText = "⚠️ 未設定 Token，僅更新於本地快取";
+            statusEl.style.color = "#d97706";
+            return;
+        }
+
+        statusEl.innerText = "🔄 正在同步更新至 GitHub 雲端...";
+        statusEl.style.color = "#2563eb";
+
+        const contentBase64 = btoa(unescape(encodeURIComponent(JSON.stringify(properties, null, 2))));
+
+        try {
+            const response = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/${GITHUB_FILE_PATH}`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `token ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    message: "Update house properties via Web Map",
+                    content: contentBase64,
+                    sha: fileSHA
+                })
+            });
+
+            if (response.ok) {
+                const resData = await response.json();
+                fileSHA = resData.content.sha;
+                statusEl.innerText = "🟢 已成功同步 Commit 至 GitHub！";
+                statusEl.style.color = "#166534";
+            } else {
+                throw new Error("API 寫入失敗");
+            }
+        } catch (e) {
+            console.error(e);
+            statusEl.innerText = "❌ 雲端同步失敗，請檢查 Token 權限";
+            statusEl.style.color = "#dc2626";
+        }
+    }
+
     function autoCalcTargetPrice(mode) {
         const pingId = mode === 'new' ? 'totalPing' : 'e_totalPing';
         const realPriceId = mode === 'new' ? 'realPrice' : 'e_realPrice';
@@ -659,7 +533,6 @@
 
         if (!ping || !realPriceStr) return;
 
-        // 提取數字 (可處理 "30~33", "30-33", "32.5萬/坪")
         const nums = realPriceStr.match(/\d+(\.\d+)?/g);
         if (!nums) return;
 
@@ -674,25 +547,6 @@
             document.getElementById(targetPriceId).value = `${minVal} ~ ${maxVal} 萬`;
         }
     }
-
-    function resetTo6DefaultProperties() {
-        if(confirm("確定要重置為最新表格順序與 6 個物件資料嗎？這將覆蓋舊的瀏覽器紀錄！")) {
-            localStorage.removeItem('淡水看房地圖資料');
-            properties = [...defaultData];
-            render();
-            alert("已成功更新欄位順序並載入 6 個案件資料！");
-        }
-    }
-
-    let newTempImages = [];
-    let editTempImages = [];
-
-    // 大圖切換全域變數
-    let currentGalleryImages = [];
-    let currentImgIndex = 0;
-
-    let map, mapMarkers = [];
-    let tempMarker = null;
 
     const allProsGrouped = {
         "📐 空間與屋況加分": ["格局方正/無過道浪費", "採光明亮/通風佳", "屋況維持佳免大整理", "衛浴/廚具屋況良好", "衛浴皆有開窗", "景觀極佳/棟距大"],
@@ -735,6 +589,7 @@
     }
 
     function render() {
+        if (!map) return;
         mapMarkers.forEach(m => map.removeLayer(m));
         mapMarkers = [];
         if (tempMarker) { map.removeLayer(tempMarker); tempMarker = null; }
@@ -809,8 +664,6 @@
                 mapMarkers.push(marker);
             }
         });
-
-        localStorage.setItem('淡水看房地圖資料', JSON.stringify(properties));
     }
 
     function handleImageUpload(event, mode) {
@@ -879,7 +732,6 @@
         });
     }
 
-    // 🖼️ 開啟照片輪播燈箱
     function openImgGalleryModal(index, source, propertyIndex) {
         if (source === 'new') {
             currentGalleryImages = newTempImages;
@@ -917,7 +769,6 @@
         document.getElementById('imgModal').style.display = 'none';
     }
 
-    // 鍵盤左右鍵控制照片
     document.addEventListener('keydown', function(e) {
         const modal = document.getElementById('imgModal');
         if (modal && modal.style.display === 'flex') {
@@ -1130,7 +981,7 @@
         renderImagePreviews('edit');
 
         document.getElementById('modalFooter').innerHTML = `
-            <button onclick="saveEdit(${index})" class="btn btn-save">💾 儲存修改</button>
+            <button onclick="saveEdit(${index})" class="btn btn-save">💾 儲存修改 (同步至 GitHub)</button>
             <button onclick="showDetail(${index})" class="btn" style="background:#64748b;">取消</button>
         `;
     }
@@ -1165,6 +1016,7 @@
         properties[index].notes = document.getElementById('e_notes').value;
 
         render();
+        pushToGitHub();
         showDetail(index);
     }
 
@@ -1210,23 +1062,25 @@
         newTempImages = [];
         document.getElementById('newImagePreviewGrid').innerHTML = '';
         render();
+        pushToGitHub();
         document.getElementById('houseForm').reset();
     }
 
     function deleteItem(index) {
-        if(confirm('確定要刪除這筆物件紀錄嗎？')) {
+        if(confirm('確定要刪除這筆物件紀錄嗎？這會同步刪除 GitHub 上的紀錄！')) {
             properties.splice(index, 1);
             render();
+            pushToGitHub();
         }
     }
 
     function exportCSV() {
-        let csvContent = "data:text/csv;charset=utf-8,\\uFEFF";
-        csvContent += "導覽圖編號,綜合評分(星級),物件名稱,開價總價(萬),格局,登記用途,型態,樓層,實價登錄行情(萬/坪),權狀總坪數,主加附坪數,車位坪數,屋齡(年),換算開價單價(萬/坪),照片數量,評估狀態,地址,車位類型,朝向,預估成交總價(萬),管理費(元/月),優點亮點,抗性缺點,備註,緯度,經度\\n";
+        let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
+        csvContent += "導覽圖編號,綜合評分(星級),物件名稱,開價總價(萬),格局,登記用途,型態,樓層,實價登錄行情(萬/坪),權狀總坪數,主加附坪數,車位坪數,屋齡(年),換算開價單價(萬/坪),照片數量,評估狀態,地址,車位類型,朝向,預估成交總價(萬),管理費(元/月),優點亮點,抗性缺點,備註,緯度,經度\n";
         
         properties.forEach(p => {
             const imgCount = p.images ? p.images.length + '張' : '0張';
-            csvContent += `"${p.code}","${p.rating || '0'}星","${p.name}","${p.price}","${p.layout || ''}","${p.purpose || ''}","${p.type || ''}","${p.floor || ''}","${p.realPrice || ''}","${p.totalPing || ''}","${p.innerPing || ''}","${p.parkingPing || ''}","${p.age || ''}","${p.unitPrice || ''}","${imgCount}","${p.status}","${p.address || ''}","${p.parkingType || ''}","${p.orientation || ''}","${p.targetPrice || ''}","${p.mgmtFee || ''}","${(p.pros||[]).join(';')}","${(p.cons||[]).join(';')}","${p.notes}","${p.lat}","${p.lng}"\\n`;
+            csvContent += `"${p.code}","${p.rating || '0'}星","${p.name}","${p.price}","${p.layout || ''}","${p.purpose || ''}","${p.type || ''}","${p.floor || ''}","${p.realPrice || ''}","${p.totalPing || ''}","${p.innerPing || ''}","${p.parkingPing || ''}","${p.age || ''}","${p.unitPrice || ''}","${imgCount}","${p.status}","${p.address || ''}","${p.parkingType || ''}","${p.orientation || ''}","${p.targetPrice || ''}","${p.mgmtFee || ''}","${(p.pros||[]).join(';')}","${(p.cons||[]).join(';')}","${p.notes}","${p.lat}","${p.lng}"\n`;
         });
 
         const encodedUri = encodeURI(csvContent);
