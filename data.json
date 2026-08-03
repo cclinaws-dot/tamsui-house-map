@@ -185,7 +185,7 @@
   },
   {
     "code": "#05",
-    "rating": "4",
+    "rating": "1",
     "name": "真善美 - 新市鎮蛋黃區真善美一房車",
     "address": "新北市淡水區新市一路三段8號2樓",
     "layout": "1房1廳1衛",
@@ -193,7 +193,7 @@
     "type": "社區大樓",
     "parkingType": "坡道平面",
     "orientation": "朝南/西南",
-    "status": "🟢 優先考慮",
+    "status": "🔴 直接排除",
     "price": "898",
     "unitPrice": "34.1",
     "targetPrice": "816 ~ 895 萬",
