@@ -69,14 +69,17 @@
 
         .btn { background: var(--primary); color: white; border: none; padding: 10px 14px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 0.9rem; }
         .btn-export { background: #475569; margin-top: 8px; width: 100%; }
-        .btn-detail { background: #0284c7; padding: 4px 8px; font-size: 0.8rem; }
-        .btn-edit { background: #eab308; padding: 6px 12px; font-size: 0.85rem; }
-        .btn-save { background: #22c55e; padding: 6px 12px; font-size: 0.85rem; }
-        .btn-danger { background: #ef4444; padding: 4px 8px; font-size: 0.8rem; }
+        .btn-edit { background: #eab308; padding: 6px 12px; font-size: 0.85rem; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        .btn-save { background: #22c55e; padding: 6px 12px; font-size: 0.85rem; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        .btn-danger { background: #ef4444; padding: 6px 12px; font-size: 0.85rem; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
 
         table { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin-top: 10px; }
         th, td { border: 1px solid #e2e8f0; padding: 8px; text-align: left; }
         th { background: #f8fafc; white-space: nowrap; }
+
+        /* 可點擊名稱連結樣式 */
+        .item-link { color: var(--primary); font-weight: bold; cursor: pointer; text-decoration: none; }
+        .item-link:hover { text-decoration: underline; color: #1d4ed8; }
 
         .custom-marker { display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 11px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.4); }
 
@@ -119,7 +122,7 @@
         <!-- ☁️ GitHub 雲端同步設定與狀態槓 -->
         <div class="github-config">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                <b>☁️ GitHub 雲端雲端資料庫狀態：</b>
+                <b>☁️ GitHub 雲端資料庫狀態：</b>
                 <span class="sync-status" id="syncStatus">🔍 讀取雲端資料中...</span>
             </div>
             <div style="display: flex; gap: 8px;">
@@ -364,7 +367,7 @@
                         <tr>
                             <th>編號</th>
                             <th>評價 / 狀態</th>
-                            <th>名稱</th>
+                            <th>名稱 (點擊看詳情)</th>
                             <th>開價總價</th>
                             <th>格局</th>
                             <th>型態</th>
@@ -375,7 +378,6 @@
                             <th>車位坪數</th>
                             <th>屋齡(年)</th>
                             <th>照片數</th>
-                            <th>操作</th>
                         </tr>
                     </thead>
                     <tbody id="dataBody"></tbody>
@@ -392,7 +394,7 @@
             <button onclick="closeModal()" style="border:none; background:none; font-size:1.5rem; cursor:pointer;">✕</button>
         </div>
         <div class="modal-body" id="modalBody"></div>
-        <div id="modalFooter" style="text-align: right; margin-top: 20px; border-top: 1px solid #e2e8f0; padding-top: 15px;"></div>
+        <div id="modalFooter" style="display:flex; justify-content:space-between; align-items:center; margin-top: 20px; border-top: 1px solid #e2e8f0; padding-top: 15px;"></div>
     </div>
 </div>
 
@@ -410,12 +412,11 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <script>
-    // GitHub API 自動同步參數設定
     const GITHUB_REPO = "cclinaws-dot/tamsui-house-map";
     const GITHUB_FILE_PATH = "data.json";
 
     let properties = [];
-    let fileSHA = ""; // GitHub API 需要的 SHA 防鎖死校驗
+    let fileSHA = "";
     let currentFilter = 'all';
 
     let newTempImages = [];
@@ -425,7 +426,6 @@
     let map, mapMarkers = [];
     let tempMarker = null;
 
-    // 初始化讀取 GitHub Token
     document.addEventListener("DOMContentLoaded", function() {
         const savedToken = localStorage.getItem('github_token');
         if (savedToken) {
@@ -443,7 +443,6 @@
         }
     }
 
-    // ☁️ 從 GitHub 讀取雲端 data.json
     async function fetchGitHubData() {
         const statusEl = document.getElementById('syncStatus');
         statusEl.innerText = "⏳ 正在讀取雲端資料...";
@@ -475,12 +474,10 @@
         render();
     }
 
-    // ☁️ 上傳推送資料至 GitHub
     async function pushToGitHub() {
         const token = localStorage.getItem('github_token');
         const statusEl = document.getElementById('syncStatus');
 
-        // 先更新本地備份
         localStorage.setItem('淡水看房地圖資料', JSON.stringify(properties));
 
         if (!token) {
@@ -614,12 +611,12 @@
 
             tbody.innerHTML += `
                 <tr>
-                    <td><b>${p.code}</b></td>
+                    <td><a class="item-link" onclick="showDetail(${originalIndex})"><b>${p.code}</b></a></td>
                     <td style="line-height:1.4;">
                         <span style="color:#d97706; font-weight:bold;">${stars}</span><br>
                         <span style="font-size:0.78rem; color:#475569;">${p.status || '-'}</span>
                     </td>
-                    <td>${p.name}</td>
+                    <td><a class="item-link" onclick="showDetail(${originalIndex})">${p.name}</a></td>
                     <td><b>${p.price}萬</b></td>
                     <td>${p.layout || '-'}</td>
                     <td>${p.type || '-'}</td>
@@ -630,10 +627,6 @@
                     <td>${p.parkingPing ? p.parkingPing + '坪' : '-'}</td>
                     <td>${p.age ? p.age + '年' : '-'}</td>
                     <td>${imgCount > 0 ? '📷 ' + imgCount + '張' : '無'}</td>
-                    <td>
-                        <button onclick="showDetail(${originalIndex})" class="btn btn-detail">🔍 詳情/編輯</button>
-                        <button onclick="deleteItem(${originalIndex})" class="btn btn-danger">刪除</button>
-                    </td>
                 </tr>
             `;
 
@@ -841,8 +834,13 @@
         `;
 
         document.getElementById('modalFooter').innerHTML = `
-            <button onclick="editDetail(${index})" class="btn btn-edit">✏️ 編輯此物件</button>
-            <button onclick="closeModal()" class="btn" style="background:#64748b;">關閉</button>
+            <div>
+                <button onclick="deleteItem(${index})" class="btn-danger">🗑️ 刪除此物件</button>
+            </div>
+            <div>
+                <button onclick="editDetail(${index})" class="btn-edit">✏️ 編輯此物件</button>
+                <button onclick="closeModal()" class="btn" style="background:#64748b; margin-left: 5px;">關閉</button>
+            </div>
         `;
 
         document.getElementById('detailModal').style.display = 'flex';
@@ -981,8 +979,11 @@
         renderImagePreviews('edit');
 
         document.getElementById('modalFooter').innerHTML = `
-            <button onclick="saveEdit(${index})" class="btn btn-save">💾 儲存修改 (同步至 GitHub)</button>
-            <button onclick="showDetail(${index})" class="btn" style="background:#64748b;">取消</button>
+            <div></div>
+            <div>
+                <button onclick="saveEdit(${index})" class="btn-save">💾 儲存修改 (同步至 GitHub)</button>
+                <button onclick="showDetail(${index})" class="btn" style="background:#64748b; margin-left:5px;">取消</button>
+            </div>
         `;
     }
 
@@ -1069,6 +1070,7 @@
     function deleteItem(index) {
         if(confirm('確定要刪除這筆物件紀錄嗎？這會同步刪除 GitHub 上的紀錄！')) {
             properties.splice(index, 1);
+            closeModal();
             render();
             pushToGitHub();
         }
