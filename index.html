@@ -142,7 +142,7 @@
                     </div>
                     <div class="form-group">
                         <label>評估狀態</label>
-                        <select id="status">
+                        <select id="status" onchange="handleStatusChange('new')">
                             <option value="🌐 網路收藏 (待約看)" selected>🌐 網路收藏 (待約看)</option>
                             <option value="📅 已預約帶看">📅 已預約帶看</option>
                             <option value="🟡 保留觀察">🟡 保留觀察</option>
@@ -154,8 +154,9 @@
                     <div class="form-group full">
                         <label>⭐ 綜合評價星級</label>
                         <select id="rating">
+                            <option value="0" selected>無 (待實地帶看)</option>
                             <option value="5">⭐⭐⭐⭐⭐ (5星 - 極力推薦)</option>
-                            <option value="4" selected>⭐⭐⭐⭐ (4星 - 滿意考慮)</option>
+                            <option value="4">⭐⭐⭐⭐ (4星 - 滿意考慮)</option>
                             <option value="3">⭐⭐⭐ (3星 - 普通尚可)</option>
                             <option value="2">⭐⭐ (2星 - 缺點偏多)</option>
                             <option value="1">⭐ (1星 - 不考慮)</option>
@@ -467,6 +468,18 @@
         }
     }
 
+    // 當切換狀態時，自動聯動切換星級評價
+    function handleStatusChange(mode) {
+        const statusEl = document.getElementById(mode === 'new' ? 'status' : 'e_status');
+        const ratingEl = document.getElementById(mode === 'new' ? 'rating' : 'e_rating');
+
+        if (statusEl.value.includes("🌐 網路收藏")) {
+            ratingEl.value = "0"; // 自動切換為「無」
+        } else if (ratingEl.value === "0") {
+            ratingEl.value = "4"; // 若切換回現場評價狀態且原本是 0，則預設回到 4 星
+        }
+    }
+
     // 地址自動定位 (Nominatim Geocoding API)
     async function geocodeAddress(mode) {
         const addrInputId = mode === 'new' ? 'address' : 'e_address';
@@ -689,7 +702,8 @@
         filteredProperties.forEach((p, index) => {
             const originalIndex = properties.indexOf(p);
             const imgCount = p.images ? p.images.length : 0;
-            const stars = "⭐".repeat(parseInt(p.rating) || 1);
+            const rVal = parseInt(p.rating) || 0;
+            const stars = rVal > 0 ? "⭐".repeat(rVal) : '<span style="color:#94a3b8; font-size:0.78rem;">無 (待帶看)</span>';
 
             let imgDisplay = '<span style="color:#94a3b8;">無</span>';
             if (imgCount > 0) {
@@ -735,7 +749,7 @@
                 marker.bindPopup(`
                     <div style="font-size:13px; line-height:1.5;">
                         <b>[${p.code}] ${p.name}</b> (${p.layout || ''} | ${p.purpose || ''})<br>
-                        <b>⭐ 評分：</b><span style="color:#d97706;">${stars}</span><br>
+                        <b>⭐ 評分：</b>${stars}<br>
                         <b>📍 地址：</b>${p.address || '無'}<br>
                         <b>總價：</b>${p.price} 萬 | <b>單價：</b>${p.unitPrice || '-'} 萬/坪<br>
                         <b>狀態：</b>${p.status}<br>
@@ -876,7 +890,8 @@
             ? p.images.map((img, i) => `<div class="img-thumb-wrap"><img src="${img}" onclick="openImgGalleryModal(${i}, 'detail', ${index})"></div>`).join('')
             : '<span style="color:#64748b; font-size:0.85rem;">未上傳現場照片/截圖</span>';
 
-        const stars = "⭐".repeat(parseInt(p.rating) || 1);
+        const rVal = parseInt(p.rating) || 0;
+        const stars = rVal > 0 ? "⭐".repeat(rVal) : '無 (待實地帶看)';
         const sourceLink = p.sourceUrl ? `<a href="${p.sourceUrl}" target="_blank" style="color:#2563eb; font-weight:bold;">🔗 點擊開啟原始網頁 (591/FB)</a>` : '未填寫';
 
         document.getElementById('modalBody').innerHTML = `
@@ -972,7 +987,7 @@
                 <div class="form-group"><label>編號</label><input type="text" id="e_code" value="${p.code || ''}"></div>
                 <div class="form-group">
                     <label>評估狀態</label>
-                    <select id="e_status">
+                    <select id="e_status" onchange="handleStatusChange('edit')">
                         <option value="🌐 網路收藏 (待約看)" ${p.status==='🌐 網路收藏 (待約看)'?'selected':''}>🌐 網路收藏 (待約看)</option>
                         <option value="📅 已預約帶看" ${p.status==='📅 已預約帶看'?'selected':''}>📅 已預約帶看</option>
                         <option value="🟡 保留觀察" ${p.status==='🟡 保留觀察'?'selected':''}>🟡 保留觀察</option>
@@ -983,6 +998,7 @@
 
                 <div class="form-group full"><label>⭐ 綜合評價星級</label>
                     <select id="e_rating">
+                        <option value="0" ${p.rating==='0'||!p.rating?'selected':''}>無 (待實地帶看)</option>
                         <option value="5" ${p.rating==='5'?'selected':''}>⭐⭐⭐⭐⭐ (5星 - 極力推薦)</option>
                         <option value="4" ${p.rating==='4'?'selected':''}>⭐⭐⭐⭐ (4星 - 滿意考慮)</option>
                         <option value="3" ${p.rating==='3'?'selected':''}>⭐⭐⭐ (3星 - 普通尚可)</option>
@@ -1204,7 +1220,9 @@
         
         properties.forEach(p => {
             const imgCount = p.images ? p.images.length + '張' : '0張';
-            csvContent += `"${p.code}","${p.rating || '0'}星","${p.name}","${p.price}","${p.layout || ''}","${p.purpose || ''}","${p.type || ''}","${p.floor || ''}","${p.realPrice || ''}","${p.totalPing || ''}","${p.innerPing || ''}","${p.parkingPing || ''}","${p.age || ''}","${p.unitPrice || ''}","${imgCount}","${p.status}","${p.address || ''}","${p.sourceUrl || ''}","${p.contactInfo || ''}","${p.parkingType || ''}","${p.orientation || ''}","${p.targetPrice || ''}","${p.mgmtFee || ''}","${(p.pros||[]).join(';')}","${(p.cons||[]).join(';')}","${p.notes}","${p.lat}","${p.lng}"\n`;
+            const rVal = parseInt(p.rating) || 0;
+            const starText = rVal > 0 ? rVal + '星' : '無';
+            csvContent += `"${p.code}","${starText}","${p.name}","${p.price}","${p.layout || ''}","${p.purpose || ''}","${p.type || ''}","${p.floor || ''}","${p.realPrice || ''}","${p.totalPing || ''}","${p.innerPing || ''}","${p.parkingPing || ''}","${p.age || ''}","${p.unitPrice || ''}","${imgCount}","${p.status}","${p.address || ''}","${p.sourceUrl || ''}","${p.contactInfo || ''}","${p.parkingType || ''}","${p.orientation || ''}","${p.targetPrice || ''}","${p.mgmtFee || ''}","${(p.pros||[]).join(';')}","${(p.cons||[]).join(';')}","${p.notes}","${p.lat}","${p.lng}"\n`;
         });
 
         const encodedUri = encodeURI(csvContent);
