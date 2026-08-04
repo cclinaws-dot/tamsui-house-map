@@ -137,7 +137,7 @@
             <form id="houseForm" onsubmit="saveProperty(event)">
                 <div class="form-grid">
                     <div class="form-group">
-                        <label>導覽圖/自訂編號</label>
+                        <label>導覽圖/自訂編號 (⚡自動帶出)</label>
                         <input type="text" id="code" placeholder="例: #01" required>
                     </div>
                     <div class="form-group">
@@ -468,6 +468,29 @@
         }
     }
 
+    // 計算並自動帶出下一個可用編號
+    function getNextAutoCode() {
+        let maxNum = 0;
+        properties.forEach(p => {
+            if (p.code) {
+                const num = parseInt(p.code.replace(/[^0-9]/g, ''), 10);
+                if (!isNaN(num) && num > maxNum) {
+                    maxNum = num;
+                }
+            }
+        });
+        const nextNum = maxNum + 1;
+        return `#${nextNum < 10 ? '0' + nextNum : nextNum}`;
+    }
+
+    // 更新新增表單的預設編號
+    function updateAutoCodeField() {
+        const codeInput = document.getElementById('code');
+        if (codeInput) {
+            codeInput.value = getNextAutoCode();
+        }
+    }
+
     // 當切換狀態時，自動聯動切換星級評價
     function handleStatusChange(mode) {
         const statusEl = document.getElementById(mode === 'new' ? 'status' : 'e_status');
@@ -563,6 +586,7 @@
             properties = JSON.parse(localStorage.getItem('淡水看房地圖資料')) || [];
         }
         render();
+        updateAutoCodeField();
     }
 
     async function pushToGitHub() {
@@ -668,6 +692,7 @@
         });
 
         render();
+        updateAutoCodeField();
     }
 
     function setFilter(filter, btn) {
@@ -1203,6 +1228,7 @@
         render();
         pushToGitHub();
         document.getElementById('houseForm').reset();
+        updateAutoCodeField();
     }
 
     function deleteItem(index) {
@@ -1211,6 +1237,7 @@
             closeModal();
             render();
             pushToGitHub();
+            updateAutoCodeField();
         }
     }
 
