@@ -14,6 +14,7 @@
             --success: #22c55e;
             --warning: #eab308;
             --danger: #ef4444;
+            --purple: #8b5cf6;
             --bg: #f8fafc;
         }
         * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
@@ -142,6 +143,8 @@
                     <div class="form-group">
                         <label>評估狀態</label>
                         <select id="status">
+                            <option value="🌐 網路收藏 (待約看)" selected>🌐 網路收藏 (待約看)</option>
+                            <option value="📅 已預約帶看">📅 已預約帶看</option>
                             <option value="🟡 保留觀察">🟡 保留觀察</option>
                             <option value="🟢 優先考慮">🟢 優先考慮</option>
                             <option value="🔴 直接排除">🔴 直接排除</option>
@@ -165,8 +168,23 @@
                     </div>
 
                     <div class="form-group full">
-                        <label>📍 詳細地址 (會在地圖自動標示)</label>
-                        <input type="text" id="address" placeholder="例: 新北市淡水區沙崙路二段863號">
+                        <label>📍 詳細地址 (可點右側按鈕自動定位地圖標籤)</label>
+                        <div style="display:flex; gap:6px;">
+                            <input type="text" id="address" placeholder="例: 新北市淡水區沙崙路二段863號">
+                            <button type="button" class="btn" onclick="geocodeAddress('new')" style="padding:6px 10px; font-size:0.8rem; white-space:nowrap; background:#475569;">🔍 自動定位</button>
+                        </div>
+                    </div>
+
+                    <!-- 🌐 網路收藏擴充欄位 -->
+                    <div class="form-group full" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 0;">
+                        <div class="form-group">
+                            <label>🔗 網路來源網址 (591/FB等)</label>
+                            <input type="text" id="sourceUrl" placeholder="例: https://sale.591.com.tw/...">
+                        </div>
+                        <div class="form-group">
+                            <label>👤 聯絡仲介 / 房東與電話</label>
+                            <input type="text" id="contactInfo" placeholder="例: 永慶張先生 0912-345-678">
+                        </div>
                     </div>
 
                     <div class="form-group">
@@ -270,7 +288,7 @@
                 </div>
 
                 <div class="form-group" style="margin-top:8px;">
-                    <label>📷 上傳現場照片 (可選取最多 15 張照片/格局圖)</label>
+                    <label>📷 上傳現場照片/截圖 (可選取最多 15 張)</label>
                     <input type="file" id="imageInput" accept="image/*" multiple onchange="handleImageUpload(event, 'new')">
                     <div class="image-preview-grid" id="newImagePreviewGrid"></div>
                 </div>
@@ -356,8 +374,9 @@
             <h2>📋 已紀錄物件資料庫</h2>
             
             <div class="filter-bar">
-                <span style="font-size:0.82rem; font-weight:bold; color:#475569;">⭐ 依評分快速篩選：</span>
+                <span style="font-size:0.82rem; font-weight:bold; color:#475569;">⭐ 依分類/星級快速篩選：</span>
                 <button class="filter-btn active" onclick="setFilter('all', this)">全部顯示</button>
+                <button class="filter-btn" onclick="setFilter('pending', this)" style="border-color:#2563eb; color:#2563eb;">🌐 待約看/帶看清單</button>
                 <button class="filter-btn" onclick="setFilter('5', this)">⭐⭐⭐⭐⭐ (5星專區)</button>
                 <button class="filter-btn" onclick="setFilter('4up', this)">⭐ 4星以上推薦</button>
                 <button class="filter-btn" onclick="setFilter('3', this)">⭐⭐⭐ (3星普通)</button>
@@ -448,7 +467,48 @@
         }
     }
 
-    // UTF-8 轉 base64 編碼器（同步寫回 GitHub 使用）
+    // 地址自動定位 (Nominatim Geocoding API)
+    async function geocodeAddress(mode) {
+        const addrInputId = mode === 'new' ? 'address' : 'e_address';
+        const address = document.getElementById(addrInputId).value.trim();
+
+        if (!address) {
+            alert("請先輸入地址再進行自動定位！");
+            return;
+        }
+
+        try {
+            const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`);
+            const data = await res.json();
+
+            if (data && data.length > 0) {
+                const lat = parseFloat(data[0].lat).toFixed(5);
+                const lng = parseFloat(data[0].lon).toFixed(5);
+
+                if (mode === 'new') {
+                    document.getElementById('lat').value = lat;
+                    document.getElementById('lng').value = lng;
+                } else {
+                    document.getElementById('e_lat').value = lat;
+                    document.getElementById('e_lng').value = lng;
+                }
+
+                if (map) {
+                    map.setView([lat, lng], 16);
+                    if (tempMarker) map.removeLayer(tempMarker);
+                    tempMarker = L.marker([lat, lng]).addTo(map)
+                        .bindPopup(`📍 已自動定位：${address}`).openPopup();
+                }
+                alert(`✅ 定位成功！座標已填入：${lat}, ${lng}`);
+            } else {
+                alert("⚠️ 找不到該地址的確切座標，請嘗試補全地址（例如加上「新北市淡水區...」）或手動點擊地圖取號！");
+            }
+        } catch (e) {
+            console.error("Geocoding 失敗：", e);
+            alert("❌ 定位服務暫時無法連線，請嘗試在左側地圖上手動點擊定位。");
+        }
+    }
+
     function utf8ToB64(str) {
         return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g,
             function toSolidBytes(match, p1) {
@@ -461,7 +521,6 @@
         statusEl.innerText = "⏳ 正在讀取雲端資料...";
         statusEl.style.color = "#2563eb";
 
-        // 先獲取檔案 SHA (供更新 Commit 使用)
         const token = localStorage.getItem('github_token');
         if (token) {
             try {
@@ -475,7 +534,6 @@
             } catch(e) { console.error("SHA 獲取失敗：", e); }
         }
 
-        // 讀取 JSON 資料：直接讀取同目錄下的相對路徑 data.json，完全避開 CORS 與 API 限制！
         try {
             const response = await fetch(`./${GITHUB_FILE_PATH}?t=${Date.now()}`);
             if (response.ok) {
@@ -619,6 +677,9 @@
 
         let filteredProperties = sortedProperties.filter(p => {
             const r = parseInt(p.rating) || 0;
+            if (currentFilter === 'pending') {
+                return (p.status || '').includes("網路收藏") || (p.status || '').includes("已預約帶看");
+            }
             if (currentFilter === '5') return r === 5;
             if (currentFilter === '4up') return r >= 4;
             if (currentFilter === '3') return r === 3;
@@ -640,7 +701,7 @@
                     <td><a class="item-link" onclick="showDetail(${originalIndex})"><b>${p.code}</b></a></td>
                     <td style="line-height:1.4;">
                         <span style="color:#d97706; font-weight:bold;">${stars}</span><br>
-                        <span style="font-size:0.78rem; color:#475569;">${p.status || '-'}</span>
+                        <span style="font-size:0.78rem; font-weight:bold; color:#475569;">${p.status || '-'}</span>
                     </td>
                     <td><a class="item-link" onclick="showDetail(${originalIndex})">${p.name}</a></td>
                     <td><b>${p.price}萬</b></td>
@@ -657,9 +718,11 @@
             `;
 
             if (p.lat && p.lng) {
-                let bgColor = "#eab308";
-                if (p.status.includes("🟢")) bgColor = "#22c55e";
-                if (p.status.includes("🔴")) bgColor = "#ef4444";
+                let bgColor = "#2563eb"; // 預設藍色 (網路收藏)
+                if ((p.status || '').includes("已預約")) bgColor = "#8b5cf6"; // 紫粉色
+                else if ((p.status || '').includes("🟢")) bgColor = "#22c55e";
+                else if ((p.status || '').includes("🟡")) bgColor = "#eab308";
+                else if ((p.status || '').includes("🔴")) bgColor = "#ef4444";
 
                 const customIcon = L.divIcon({
                     className: 'custom-pin',
@@ -811,12 +874,18 @@
 
         let imgsHtml = p.images && p.images.length > 0
             ? p.images.map((img, i) => `<div class="img-thumb-wrap"><img src="${img}" onclick="openImgGalleryModal(${i}, 'detail', ${index})"></div>`).join('')
-            : '<span style="color:#64748b; font-size:0.85rem;">未上傳現場照片</span>';
+            : '<span style="color:#64748b; font-size:0.85rem;">未上傳現場照片/截圖</span>';
 
         const stars = "⭐".repeat(parseInt(p.rating) || 1);
+        const sourceLink = p.sourceUrl ? `<a href="${p.sourceUrl}" target="_blank" style="color:#2563eb; font-weight:bold;">🔗 點擊開啟原始網頁 (591/FB)</a>` : '未填寫';
 
         document.getElementById('modalBody').innerHTML = `
             <div style="margin-bottom:10px;"><b>📍 詳細地址：</b> ${p.address || '未填寫'}</div>
+            <div style="margin-bottom:10px; background:#eff6ff; padding:8px 12px; border-radius:6px;">
+                <b>🌐 網路來源：</b> ${sourceLink}<br>
+                <b>👤 聯絡窗口：</b> ${p.contactInfo || '未填寫'}
+            </div>
+
             <div class="detail-grid">
                 <div><b>⭐ 滿意度評價：</b> <span style="color:#d97706; font-weight:bold;">${stars}</span></div>
                 <div><b>評估狀態：</b> ${p.status}</div>
@@ -904,6 +973,8 @@
                 <div class="form-group">
                     <label>評估狀態</label>
                     <select id="e_status">
+                        <option value="🌐 網路收藏 (待約看)" ${p.status==='🌐 網路收藏 (待約看)'?'selected':''}>🌐 網路收藏 (待約看)</option>
+                        <option value="📅 已預約帶看" ${p.status==='📅 已預約帶看'?'selected':''}>📅 已預約帶看</option>
                         <option value="🟡 保留觀察" ${p.status==='🟡 保留觀察'?'selected':''}>🟡 保留觀察</option>
                         <option value="🟢 優先考慮" ${p.status==='🟢 優先考慮'?'selected':''}>🟢 優先考慮</option>
                         <option value="🔴 直接排除" ${p.status==='🔴 直接排除'?'selected':''}>🔴 直接排除</option>
@@ -921,7 +992,19 @@
                 </div>
 
                 <div class="form-group full"><label>社區 / 物件名稱</label><input type="text" id="e_name" value="${p.name || ''}"></div>
-                <div class="form-group full"><label>📍 地址</label><input type="text" id="e_address" value="${p.address || ''}"></div>
+                
+                <div class="form-group full">
+                    <label>📍 地址</label>
+                    <div style="display:flex; gap:6px;">
+                        <input type="text" id="e_address" value="${p.address || ''}">
+                        <button type="button" class="btn" onclick="geocodeAddress('edit')" style="padding:6px 10px; font-size:0.8rem; white-space:nowrap; background:#475569;">🔍 自動定位</button>
+                    </div>
+                </div>
+
+                <div class="form-group full" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 0;">
+                    <div class="form-group"><label>🔗 網路來源網址</label><input type="text" id="e_sourceUrl" value="${p.sourceUrl || ''}"></div>
+                    <div class="form-group"><label>👤 聯絡仲介 / 房東與電話</label><input type="text" id="e_contactInfo" value="${p.contactInfo || ''}"></div>
+                </div>
                 
                 <div class="form-group"><label>格局配置</label><input type="text" id="e_layout" value="${p.layout || ''}"></div>
                 <div class="form-group"><label>登記用途</label>
@@ -983,6 +1066,9 @@
                 </div>
             </div>
 
+            <input type="hidden" id="e_lat" value="${p.lat || ''}">
+            <input type="hidden" id="e_lng" value="${p.lng || ''}">
+
             <div class="form-group" style="margin-top:10px;">
                 <label>📷 管理物件照片 (最多 15 張)</label>
                 <input type="file" id="editImageInput" accept="image/*" multiple onchange="handleImageUpload(event, 'edit')">
@@ -1024,6 +1110,8 @@
         properties[index].rating = document.getElementById('e_rating').value;
         properties[index].name = document.getElementById('e_name').value;
         properties[index].address = document.getElementById('e_address').value;
+        properties[index].sourceUrl = document.getElementById('e_sourceUrl').value;
+        properties[index].contactInfo = document.getElementById('e_contactInfo').value;
         properties[index].layout = document.getElementById('e_layout').value;
         properties[index].purpose = document.getElementById('e_purpose').value;
         properties[index].status = document.getElementById('e_status').value;
@@ -1044,6 +1132,9 @@
         properties[index].pros = selectedPros;
         properties[index].cons = selectedCons;
         properties[index].notes = document.getElementById('e_notes').value;
+        
+        if (document.getElementById('e_lat').value) properties[index].lat = document.getElementById('e_lat').value;
+        if (document.getElementById('e_lng').value) properties[index].lng = document.getElementById('e_lng').value;
 
         render();
         pushToGitHub();
@@ -1064,6 +1155,8 @@
             rating: document.getElementById('rating').value,
             name: document.getElementById('name').value,
             address: document.getElementById('address').value,
+            sourceUrl: document.getElementById('sourceUrl').value,
+            contactInfo: document.getElementById('contactInfo').value,
             layout: document.getElementById('layout').value,
             purpose: document.getElementById('purpose').value,
             type: document.getElementById('type').value,
@@ -1107,11 +1200,11 @@
 
     function exportCSV() {
         let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
-        csvContent += "導覽圖編號,綜合評分(星級),物件名稱,開價總價(萬),格局,登記用途,型態,樓層,實價登錄行情(萬/坪),權狀總坪數,主加附坪數,車位坪數,屋齡(年),換算開價單價(萬/坪),照片數量,評估狀態,地址,車位類型,朝向,預估成交總價(萬),管理費(元/月),優點亮點,抗性缺點,備註,緯度,經度\n";
+        csvContent += "導覽圖編號,綜合評分(星級),物件名稱,開價總價(萬),格局,登記用途,型態,樓層,實價登錄行情(萬/坪),權狀總坪數,主加附坪數,車位坪數,屋齡(年),換算開價單價(萬/坪),照片數量,評估狀態,地址,來源網址,聯絡資訊,車位類型,朝向,預估成交總價(萬),管理費(元/月),優點亮點,抗性缺點,備註,緯度,經度\n";
         
         properties.forEach(p => {
             const imgCount = p.images ? p.images.length + '張' : '0張';
-            csvContent += `"${p.code}","${p.rating || '0'}星","${p.name}","${p.price}","${p.layout || ''}","${p.purpose || ''}","${p.type || ''}","${p.floor || ''}","${p.realPrice || ''}","${p.totalPing || ''}","${p.innerPing || ''}","${p.parkingPing || ''}","${p.age || ''}","${p.unitPrice || ''}","${imgCount}","${p.status}","${p.address || ''}","${p.parkingType || ''}","${p.orientation || ''}","${p.targetPrice || ''}","${p.mgmtFee || ''}","${(p.pros||[]).join(';')}","${(p.cons||[]).join(';')}","${p.notes}","${p.lat}","${p.lng}"\n`;
+            csvContent += `"${p.code}","${p.rating || '0'}星","${p.name}","${p.price}","${p.layout || ''}","${p.purpose || ''}","${p.type || ''}","${p.floor || ''}","${p.realPrice || ''}","${p.totalPing || ''}","${p.innerPing || ''}","${p.parkingPing || ''}","${p.age || ''}","${p.unitPrice || ''}","${imgCount}","${p.status}","${p.address || ''}","${p.sourceUrl || ''}","${p.contactInfo || ''}","${p.parkingType || ''}","${p.orientation || ''}","${p.targetPrice || ''}","${p.mgmtFee || ''}","${(p.pros||[]).join(';')}","${(p.cons||[]).join(';')}","${p.notes}","${p.lat}","${p.lng}"\n`;
         });
 
         const encodedUri = encodeURI(csvContent);
