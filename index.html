@@ -35,6 +35,25 @@
         /* 地圖容器 */
         #map { width: 100%; height: 750px; border-radius: 8px; border: 1px solid #cbd5e1; }
 
+        /* 地圖選擇模式的提示條 */
+        #mapPickerNotice {
+            display: none;
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #2563eb;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-weight: bold;
+            font-size: 1rem;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            z-index: 10001;
+            align-items: center;
+            gap: 15px;
+        }
+
         /* 表單格線 */
         .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .form-group { margin-bottom: 10px; }
@@ -82,7 +101,7 @@
         .item-link { color: var(--primary); font-weight: bold; cursor: pointer; text-decoration: none; }
         .item-link:hover { text-decoration: underline; color: #1d4ed8; }
 
-        .custom-marker { display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 11px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.4); cursor: grab; }
+        .custom-marker { display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 11px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.4); }
 
         /* Modal */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 9999; }
@@ -109,6 +128,12 @@
 
 <div class="header">
     <h1>🗺️ 淡水 - 電子互動地圖看房系統</h1>
+</div>
+
+<!-- 地圖選點模式提示條 -->
+<div id="mapPickerNotice">
+    <span>📍 請直接在左側地圖上點擊該物件的正確位置...</span>
+    <button onclick="cancelMapPick()" style="background:#ef4444; color:white; border:none; padding:4px 10px; border-radius:15px; cursor:pointer; font-size:0.85rem;">取消選點</button>
 </div>
 
 <div class="main-layout">
@@ -169,7 +194,7 @@
                     </div>
 
                     <div class="form-group full">
-                        <label>📍 詳細地址 (或直接填社區名，點右側按鈕自動定位)</label>
+                        <label>📍 詳細地址 (或直接填社區名)</label>
                         <div style="display:flex; gap:6px;">
                             <input type="text" id="address" placeholder="例: 淡水區新民街322巷4號 或 台北灣">
                             <button type="button" class="btn" onclick="geocodeAddress('new')" style="padding:6px 10px; font-size:0.8rem; white-space:nowrap; background:#475569;">🔍 自動定位</button>
@@ -448,7 +473,7 @@
     let currentImgIndex = 0;
     let map, mapMarkers = [];
     let tempMarker = null;
-    let currentEditingIndex = -1; // 當前正在編輯的物件 Index
+    let isMapPickingMode = false; // 是否處於地圖親自選點狀態
 
     document.addEventListener("DOMContentLoaded", function() {
         const savedToken = localStorage.getItem('github_token');
@@ -504,6 +529,19 @@
         }
     }
 
+    // 啟動親自地圖點擊選點模式（暫時隱藏編輯彈窗）
+    function startMapPick() {
+        isMapPickingMode = true;
+        document.getElementById('detailModal').style.display = 'none'; // 隱藏彈窗
+        document.getElementById('mapPickerNotice').style.display = 'flex'; // 顯示提示條
+    }
+
+    function cancelMapPick() {
+        isMapPickingMode = false;
+        document.getElementById('mapPickerNotice').style.display = 'none';
+        document.getElementById('detailModal').style.display = 'flex';
+    }
+
     // 精準純文字地址/社區名稱自動定位 (完全排除社區物件長標題欄位)
     async function geocodeAddress(mode) {
         const addrInputId = mode === 'new' ? 'address' : 'e_address';
@@ -554,9 +592,6 @@
             } else {
                 document.getElementById('e_lat').value = lat;
                 document.getElementById('e_lng').value = lng;
-                if (currentEditingIndex >= 0 && mapMarkers[currentEditingIndex]) {
-                    mapMarkers[currentEditingIndex].setLatLng([lat, lng]);
-                }
             }
 
             if (map) {
@@ -569,7 +604,7 @@
             }
             alert(`✅ 定位成功！座標已自動更新為：${lat}, ${lng}`);
         } else {
-            alert(`⚠️ 找不到「${rawInput}」的確切座標！\n建議直接在左側地圖上「點擊點位」手動標記！`);
+            alert(`⚠️ 找不到「${rawInput}」的確切座標！\n建議直接點選「📍 在地圖上選點」直接標記位置！`);
         }
     }
 
@@ -712,13 +747,16 @@
             const lat = e.latlng.lat.toFixed(5);
             const lng = e.latlng.lng.toFixed(5);
 
-            // 如果正在編輯物件，點地圖直接更新該物件座標！
-            if (currentEditingIndex >= 0) {
+            // 如果處於「地圖親自選點」狀態：
+            if (isMapPickingMode) {
                 document.getElementById('e_lat').value = lat;
                 document.getElementById('e_lng').value = lng;
-                if (mapMarkers[currentEditingIndex]) {
-                    mapMarkers[currentEditingIndex].setLatLng([lat, lng]);
-                }
+                
+                isMapPickingMode = false;
+                document.getElementById('mapPickerNotice').style.display = 'none';
+                document.getElementById('detailModal').style.display = 'flex'; // 重新打開編輯彈窗
+                
+                alert(`✅ 已更新座標為：${lat}, ${lng}\n請繼續確認其他欄位後，點擊「💾 儲存修改」！`);
             } else {
                 document.getElementById('lat').value = lat;
                 document.getElementById('lng').value = lng;
@@ -808,24 +846,7 @@
                     iconAnchor: [14, 14]
                 });
 
-                // 是否為當前正在編輯的物件？如果是，開啟拖曳 (draggable)
-                const isEditing = (originalIndex === currentEditingIndex);
-                const marker = L.marker([p.lat, p.lng], { 
-                    icon: customIcon,
-                    draggable: isEditing 
-                }).addTo(map);
-
-                // 拖曳結束事件
-                if (isEditing) {
-                    marker.on('dragend', function(e) {
-                        const newPos = e.target.getLatLng();
-                        const lat = newPos.lat.toFixed(5);
-                        const lng = newPos.lng.toFixed(5);
-                        document.getElementById('e_lat').value = lat;
-                        document.getElementById('e_lng').value = lng;
-                    });
-                }
-
+                const marker = L.marker([p.lat, p.lng], { icon: customIcon }).addTo(map);
                 marker.bindPopup(`
                     <div style="font-size:13px; line-height:1.5;">
                         <b>[${p.code}] ${p.name}</b> (${p.layout || ''} | ${p.purpose || ''})<br>
@@ -837,7 +858,7 @@
                     </div>
                 `);
 
-                mapMarkers[originalIndex] = marker;
+                mapMarkers.push(marker);
             }
         });
     }
@@ -955,9 +976,6 @@
     });
 
     function showDetail(index) {
-        currentEditingIndex = -1; // 重置編輯狀態
-        render(); // 恢復標籤不可拖曳
-
         const p = properties[index];
         document.getElementById('modalTitle').innerText = `[${p.code}] ${p.name}`;
         
@@ -1038,16 +1056,12 @@
 
         document.getElementById('detailModal').style.display = 'flex';
 
-        // 移到地圖該物件位置
         if (map && p.lat && p.lng) {
             map.setView([p.lat, p.lng], 16);
         }
     }
 
     function editDetail(index) {
-        currentEditingIndex = index; // 標記為正在編輯狀態
-        render(); // 觸發使地圖上的這個 Marker 變成可拖曳 (draggable)
-
         const p = properties[index];
         editTempImages = p.images ? [...p.images] : [];
 
@@ -1074,10 +1088,6 @@
         }
 
         document.getElementById('modalBody').innerHTML = `
-            <div style="background:#fef3c7; border:1px solid #fde68a; color:#92400e; padding:8px 12px; border-radius:6px; font-size:0.85rem; margin-bottom:12px;">
-                💡 <b>定位微調提示：</b> 您現在可以直接在左側地圖上<b>用滑鼠按住 [${p.code}] 標籤拖曳移動</b>，或是直接在<b>地圖上點擊</b>，即可修正到精確位置！
-            </div>
-
             <div class="form-grid">
                 <div class="form-group"><label>編號</label><input type="text" id="e_code" value="${p.code || ''}"></div>
                 <div class="form-group">
@@ -1105,10 +1115,11 @@
                 <div class="form-group full"><label>社區 / 物件名稱</label><input type="text" id="e_name" value="${p.name || ''}"></div>
                 
                 <div class="form-group full">
-                    <label>📍 地址</label>
+                    <label>📍 地址與座標</label>
                     <div style="display:flex; gap:6px;">
-                        <input type="text" id="e_address" value="${p.address || ''}">
+                        <input type="text" id="e_address" value="${p.address || ''}" placeholder="請輸入地址">
                         <button type="button" class="btn" onclick="geocodeAddress('edit')" style="padding:6px 10px; font-size:0.8rem; white-space:nowrap; background:#475569;">🔍 自動定位</button>
+                        <button type="button" class="btn" onclick="startMapPick()" style="padding:6px 10px; font-size:0.8rem; white-space:nowrap; background:#2563eb;">📍 在地圖上選點</button>
                     </div>
                 </div>
 
@@ -1208,15 +1219,9 @@
             <div></div>
             <div>
                 <button onclick="saveEdit(${index})" class="btn-save">💾 儲存修改 (同步至 GitHub)</button>
-                <button onclick="cancelEdit(${index})" class="btn" style="background:#64748b; margin-left:5px;">取消</button>
+                <button onclick="showDetail(${index})" class="btn" style="background:#64748b; margin-left:5px;">取消</button>
             </div>
         `;
-    }
-
-    function cancelEdit(index) {
-        currentEditingIndex = -1;
-        render();
-        showDetail(index);
     }
 
     function saveEdit(index) {
@@ -1253,15 +1258,12 @@
         if (document.getElementById('e_lat').value) properties[index].lat = document.getElementById('e_lat').value;
         if (document.getElementById('e_lng').value) properties[index].lng = document.getElementById('e_lng').value;
 
-        currentEditingIndex = -1; // 編輯完成重置
         render();
         pushToGitHub();
         showDetail(index);
     }
 
     function closeModal() {
-        currentEditingIndex = -1;
-        render();
         document.getElementById('detailModal').style.display = 'none';
     }
 
@@ -1313,7 +1315,6 @@
     function deleteItem(index) {
         if(confirm('確定要刪除這筆物件紀錄嗎？這會同步刪除 GitHub 上的紀錄！')) {
             properties.splice(index, 1);
-            currentEditingIndex = -1;
             closeModal();
             render();
             pushToGitHub();
