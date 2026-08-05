@@ -15,6 +15,7 @@
             --warning: #eab308;
             --danger: #ef4444;
             --purple: #8b5cf6;
+            --gray: #64748b;
             --bg: #f8fafc;
         }
         * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
@@ -27,44 +28,32 @@
         h2 { margin-top: 0; font-size: 1.15rem; color: #1e293b; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px; }
 
         /* GitHub 設定區塊 */
-        .github-config {
-            background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 12px; margin-bottom: 15px; font-size: 0.85rem;
-        }
+        .github-config { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 12px; margin-bottom: 15px; font-size: 0.85rem; }
         .sync-status { display: inline-block; font-weight: bold; margin-left: 10px; }
 
         /* 地圖容器 */
         #map { width: 100%; height: 750px; border-radius: 8px; border: 1px solid #cbd5e1; }
 
-        /* 地圖選擇模式的提示條 */
-        #mapPickerNotice {
-            display: none;
-            position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #2563eb;
-            color: white;
-            padding: 12px 24px;
-            border-radius: 30px;
-            font-weight: bold;
-            font-size: 1rem;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-            z-index: 10001;
-            align-items: center;
-            gap: 15px;
-        }
+        /* 地圖選擇模式提示條 */
+        #mapPickerNotice { display: none; position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #2563eb; color: white; padding: 12px 24px; border-radius: 30px; font-weight: bold; font-size: 1rem; box-shadow: 0 10px 25px rgba(0,0,0,0.3); z-index: 10001; align-items: center; gap: 15px; }
+
+        /* 文字快速拆解區塊 */
+        .smart-paste-box { background: #fdf4ff; border: 1px solid #f5d0fe; border-radius: 8px; padding: 12px; margin-bottom: 15px; font-size: 0.85rem; }
 
         /* 表單格線 */
         .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .form-group { margin-bottom: 10px; }
         .form-group.full { grid-column: span 2; }
         label { font-size: 0.82rem; font-weight: 600; display: block; margin-bottom: 4px; color: #475569; }
-        input[type="text"], input[type="number"], input[type="date"], select, textarea, input[type="password"] { 
-            width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.88rem; outline: none;
-        }
+        input[type="text"], input[type="number"], input[type="date"], select, textarea, input[type="password"] { width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.88rem; outline: none; }
         input:focus, select:focus, textarea:focus { border-color: var(--primary); }
 
-        /* 篩選按鈕列 */
+        /* 財務計算器樣式區塊 */
+        .calc-box { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 12px; margin-top: 8px; font-size: 0.85rem; }
+        .calc-title { font-weight: bold; color: #166534; margin-bottom: 8px; }
+        .calc-result { background: white; padding: 8px; border-radius: 6px; border: 1px dashed #86efac; margin-top: 8px; line-height: 1.6; }
+
+        /* 篩選按鈕列與搜尋欄 */
         .filter-bar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; align-items: center; }
         .filter-btn { background: #f1f5f9; border: 1px solid #cbd5e1; padding: 5px 10px; border-radius: 6px; font-size: 0.8rem; cursor: pointer; font-weight: 600; color: #475569; }
         .filter-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
@@ -153,12 +142,20 @@
             </div>
             <div style="display: flex; gap: 8px;">
                 <input type="password" id="githubToken" placeholder="第一次使用請貼入 GitHub Personal Token (ghp_...)" style="flex:1;">
-                <button onclick="saveToken()" class="btn" style="padding: 6px 12px; font-size: 0.8rem;">💾 儲存/更新 Key</button>
+                <button onclick="saveToken()" class="btn" style="padding: 6px 12px; font-size: 0.8rem;">💾 儲存 Key</button>
             </div>
         </div>
 
         <div class="card">
             <h2>📝 新增物件紀錄</h2>
+
+            <!-- 📋 快速貼上文字自動拆解區塊 -->
+            <div class="smart-paste-box">
+                <div style="font-weight:bold; color:#86198f; margin-bottom:6px;">📋 貼上 FB / 591 售屋全文，一鍵自動拆解填表：</div>
+                <textarea id="smartPasteText" rows="3" placeholder="請將 FB 社團或 591 複製的完整物件內文貼至此處..."></textarea>
+                <button type="button" class="btn" onclick="parseSmartPasteText()" style="width:100%; margin-top:6px; background:#a855f7;">⚡ 自動拆解內文並填入下方欄位</button>
+            </div>
+
             <form id="houseForm" onsubmit="saveProperty(event)">
                 <div class="form-grid">
                     <div class="form-group">
@@ -173,6 +170,7 @@
                             <option value="🟡 保留觀察">🟡 保留觀察</option>
                             <option value="🟢 優先考慮">🟢 優先考慮</option>
                             <option value="🔴 直接排除">🔴 直接排除</option>
+                            <option value="❌ 已售出/已下架">❌ 已售出/已下架</option>
                         </select>
                     </div>
 
@@ -198,6 +196,7 @@
                         <div style="display:flex; gap:6px;">
                             <input type="text" id="address" placeholder="例: 淡水區新民街322巷4號 或 台北灣">
                             <button type="button" class="btn" onclick="geocodeAddress('new')" style="padding:6px 10px; font-size:0.8rem; white-space:nowrap; background:#475569;">🔍 自動定位</button>
+                            <button type="button" class="btn" onclick="getGPSLocation('new')" style="padding:6px 10px; font-size:0.8rem; white-space:nowrap; background:#059669;">📱 GPS定位</button>
                         </div>
                     </div>
 
@@ -268,12 +267,48 @@
                     <div class="form-group full" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 0;">
                         <div class="form-group">
                             <label>開價 (萬元)</label>
-                            <input type="number" id="price" placeholder="例: 1150">
+                            <input type="number" id="price" placeholder="例: 1150" oninput="calculateMortgage('new')">
                         </div>
                         <div class="form-group">
                             <label>換算開價單價 (萬/坪)</label>
                             <input type="number" step="0.1" id="unitPrice" placeholder="例: 32.8">
                         </div>
+                    </div>
+
+                    <!-- 💰 房貸計算試算區塊 -->
+                    <div class="form-group full calc-box">
+                        <div class="calc-title">💰 房貸與自備款自動試算</div>
+                        <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:8px;">
+                            <div>
+                                <label>貸款成數</label>
+                                <select id="loanRatio" onchange="calculateMortgage('new')">
+                                    <option value="0.8" selected>8 成</option>
+                                    <option value="0.85">8.5 成</option>
+                                    <option value="0.7">7 成</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label>年利率 (%)</label>
+                                <input type="number" id="loanRate" value="2.185" step="0.01" oninput="calculateMortgage('new')">
+                            </div>
+                            <div>
+                                <label>貸款年限</label>
+                                <select id="loanYears" onchange="calculateMortgage('new')">
+                                    <option value="30" selected>30 年</option>
+                                    <option value="40">40 年</option>
+                                    <option value="20">20 年</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label>寬限期 (年)</label>
+                                <select id="graceYears" onchange="calculateMortgage('new')">
+                                    <option value="0" selected>無寬限期</option>
+                                    <option value="3">3 年</option>
+                                    <option value="5">5 年</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="calc-result" id="mortgageResultNew">💡 請輸入開價總價即可算出自備款與月繳金額</div>
                     </div>
 
                     <div class="form-group full" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 0;">
@@ -384,8 +419,12 @@
                     </div>
                 </div>
 
-                <div class="form-group">
-                    <label>個人心得與其他備註</label>
+                <!-- 🎙️ 現場語音筆記與備註 -->
+                <div class="form-group" style="margin-top:8px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                        <label style="margin:0;">個人心得與其他備註</label>
+                        <button type="button" class="btn" onclick="startSpeechRecognition('notes')" style="padding:3px 8px; font-size:0.78rem; background:#8b5cf6;">🎙️ 語音轉文字筆記</button>
+                    </div>
                     <textarea id="notes" rows="2" placeholder="備註梯戶比、公設維護狀況、現場感受..."></textarea>
                 </div>
 
@@ -399,13 +438,27 @@
         <div class="card">
             <h2>📋 已紀錄物件資料庫</h2>
             
-            <div class="filter-bar">
-                <span style="font-size:0.82rem; font-weight:bold; color:#475569;">⭐ 依分類/星級快速篩選：</span>
-                <button class="filter-btn active" onclick="setFilter('all', this)">全部顯示</button>
-                <button class="filter-btn" onclick="setFilter('pending', this)" style="border-color:#2563eb; color:#2563eb;">🌐 待約看/帶看清單</button>
-                <button class="filter-btn" onclick="setFilter('5', this)">⭐⭐⭐⭐⭐ (5星專區)</button>
-                <button class="filter-btn" onclick="setFilter('4up', this)">⭐ 4星以上推薦</button>
-                <button class="filter-btn" onclick="setFilter('3', this)">⭐⭐⭐ (3星普通)</button>
+            <!-- 🔍 關鍵字搜尋與金額過濾區塊 -->
+            <div style="background:#f1f5f9; padding:12px; border-radius:8px; margin-bottom:12px;">
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:8px;">
+                    <div>
+                        <label>🔍 關鍵字搜尋</label>
+                        <input type="text" id="searchInput" placeholder="輸入街名、社區名、平車..." oninput="render()">
+                    </div>
+                    <div>
+                        <label>💰 最高開價上限: <span id="priceValue" style="color:#2563eb; font-weight:bold;">不限</span></label>
+                        <input type="range" id="priceRange" min="500" max="3000" step="50" value="3000" oninput="updatePriceSlider(this.value)">
+                    </div>
+                </div>
+
+                <div class="filter-bar" style="margin-bottom:0;">
+                    <span style="font-size:0.82rem; font-weight:bold; color:#475569;">⭐ 依分類/星級快速篩選：</span>
+                    <button class="filter-btn active" onclick="setFilter('all', this)">全部顯示</button>
+                    <button class="filter-btn" onclick="setFilter('pending', this)" style="border-color:#2563eb; color:#2563eb;">🌐 待約看/帶看清單</button>
+                    <button class="filter-btn" onclick="setFilter('5', this)">⭐⭐⭐⭐⭐ (5星專區)</button>
+                    <button class="filter-btn" onclick="setFilter('4up', this)">⭐ 4星以上推薦</button>
+                    <button class="filter-btn" onclick="setFilter('3', this)">⭐⭐⭐ (3星普通)</button>
+                </div>
             </div>
 
             <button onclick="exportCSV()" class="btn btn-export">📥 匯出 CSV 檔案 (備份/匯入 Notion)</button>
@@ -487,14 +540,229 @@
         const token = document.getElementById('githubToken').value.trim();
         if (token) {
             localStorage.setItem('github_token', token);
-            alert("Token 已被永久寫入瀏覽器！此後重新整理頁面皆會自動保持登入。");
+            alert("Token 已儲存！");
             fetchGitHubData();
         } else {
             alert("請貼入有效的 GitHub Token！");
         }
     }
 
-    // 計算並自動帶出下一個可用編號
+    // 📋 自動拆解 FB/591 複製文字正則引擎
+    function parseSmartPasteText() {
+        const text = document.getElementById('smartPasteText').value.trim();
+        if (!text) {
+            alert("請先將 FB 社團或 591 複製的文字貼入文字框！");
+            return;
+        }
+
+        // 1. 拆解開價 (萬)
+        const priceMatch = text.match(/(?:開價|售價|總價|💰|價)[\s｜:|：]*(\d+)\s*萬/i) || text.match(/(\d+)\s*萬/);
+        if (priceMatch) {
+            document.getElementById('price').value = priceMatch[1];
+        }
+
+        // 2. 拆解格局 (例: 2房2廳1衛 / 2房(室)2廳2衛)
+        const layoutMatch = text.match(/\d+[\s]*房\([室s]\)[\s]*\d+[\s]*廳[\s]*\d+[\s]*衛/i) || text.match(/\d+[\s]*房[\s]*\d+[\s]*廳[\s]*\d+[\s]*衛/i) || text.match(/\d+[\s]*房[\s]*\d+[\s]*衛/i);
+        if (layoutMatch) {
+            document.getElementById('layout').value = layoutMatch[0].replace(/\([室s]\)/g, '');
+        }
+
+        // 3. 拆解權狀總坪數
+        const totalPingMatch = text.match(/(?:建物坪數|總坪數|建物總坪|坪數)[\s｜:|：]*(\d+(?:\.\d+)?)\s*坪/i);
+        if (totalPingMatch) {
+            document.getElementById('totalPing').value = totalPingMatch[1];
+        }
+
+        // 4. 拆解主建物/主+附坪數
+        const innerPingMatch = text.match(/(?:主建物|主+附|室內)[\s｜:|：]*(\d+(?:\.\d+)?)\s*坪/i);
+        if (innerPingMatch) {
+            document.getElementById('innerPing').value = innerPingMatch[1];
+        }
+
+        // 5. 拆解車位坪數
+        const parkingPingMatch = text.match(/(?:含車位|車位坪數|車位)[\s｜:|：]*(\d+(?:\.\d+)?)\s*坪/i);
+        if (parkingPingMatch) {
+            document.getElementById('parkingPing').value = parkingPingMatch[1];
+        }
+
+        // 6. 拆解車位類型
+        if (text.includes("平面")) document.getElementById('parkingType').value = "坡道平面";
+        else if (text.includes("機械")) document.getElementById('parkingType').value = "坡道機械";
+
+        // 7. 拆解樓層
+        const floorMatch = text.match(/樓層[\s｜:|：]*(\d+[\s]*[樓F]\s*[\/／]\s*共?[\s]*\d+[\s]*[樓F])/i) || text.match(/(\d+[\s]*[樓F]\s*[\/／]\s*共?[\s]*\d+[\s]*[樓F])/i);
+        if (floorMatch) {
+            document.getElementById('floor').value = floorMatch[1].replace(/\s+/g, '');
+        }
+
+        // 8. 拆解屋齡
+        const ageMatch = text.match(/屋齡[\s｜:|：]*約?[\s]*(\d+(?:\.\d+)?)\s*年/i);
+        if (ageMatch) {
+            document.getElementById('age').value = ageMatch[1];
+        }
+
+        // 9. 拆解地址
+        const addrMatch = text.match(/(新北市淡水區[^\n\r,，]+|淡水區[^\n\r,，]+|新春街[^\n\r,，]+|濱海路[^\n\r,，]+|沙崙路[^\n\r,，]+|新民街[^\n\r,，]+)/i);
+        if (addrMatch) {
+            document.getElementById('address').value = addrMatch[1].trim();
+        }
+
+        // 10. 拆解社區/物件名稱
+        const nameMatch = text.match(/(?:社區名稱|案名|📍)[\s｜:|：]*([^\n\r]+)/i);
+        if (nameMatch) {
+            document.getElementById('name').value = nameMatch[1].replace(/【|】|🌿|✨/g, '').trim();
+        } else {
+            const firstLine = text.split('\n')[0].replace(/【|】|🌿|✨|🔥/g, '').trim();
+            if (firstLine) document.getElementById('name').value = firstLine.substring(0, 30);
+        }
+
+        // 11. 拆解網址與聯絡資訊
+        const urlMatch = text.match(/(https?:\/\/[^\s]+)/i);
+        if (urlMatch) {
+            document.getElementById('sourceUrl').value = urlMatch[1];
+        }
+
+        const phoneMatch = text.match(/(09\d{2}[-\s]?\d{3}[-\s]?\d{3})/);
+        const agentMatch = text.match(/([一-龥]{2,4}\s*(?:房仲|有巢氏|永慶|台慶|大家房屋|房東))/i);
+        if (phoneMatch) {
+            document.getElementById('contactInfo').value = `${agentMatch ? agentMatch[1] : ''} ${phoneMatch[1]}`.trim();
+        }
+
+        // 12. 備註寫入全文
+        document.getElementById('notes').value = text;
+
+        // 自動觸發試算與定位
+        calculateMortgage('new');
+        if (document.getElementById('address').value) {
+            geocodeAddress('new');
+        }
+
+        alert("⚡ 自動拆解完成！請檢查下方欄位確認無誤。");
+    }
+
+    function updatePriceSlider(val) {
+        document.getElementById('priceValue').innerText = val == 3000 ? '不限' : `${val} 萬以下`;
+        render();
+    }
+
+    // 📱 GPS 現場定位功能
+    function getGPSLocation(mode) {
+        if (!navigator.geolocation) {
+            alert("您的裝置或瀏覽器不支援 GPS 定位服務！");
+            return;
+        }
+
+        alert("📍 正在獲取您的手機 GPS 位置，請允許存取位置權限...");
+
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                const lat = position.coords.latitude.toFixed(5);
+                const lng = position.coords.longitude.toFixed(5);
+
+                if (mode === 'new') {
+                    document.getElementById('lat').value = lat;
+                    document.getElementById('lng').value = lng;
+                } else {
+                    document.getElementById('e_lat').value = lat;
+                    document.getElementById('e_lng').value = lng;
+                }
+
+                if (map) {
+                    map.setView([lat, lng], 17);
+                    if (mode === 'new') {
+                        if (tempMarker) map.removeLayer(tempMarker);
+                        tempMarker = L.marker([lat, lng]).addTo(map)
+                            .bindPopup("📍 GPS 現場定位成功！").openPopup();
+                    }
+                }
+                alert(`✅ GPS 定位成功！座標：${lat}, ${lng}`);
+            },
+            (error) => {
+                alert(`❌ GPS 定位失敗：${error.message}`);
+            },
+            { enableHighAccuracy: true, timeout: 10000 }
+        );
+    }
+
+    // 🎙️ Web Speech 語音轉文字功能
+    function startSpeechRecognition(targetTextareaId) {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+            alert("您的瀏覽器不支援語音辨識（建議使用 Chrome/Safari）！");
+            return;
+        }
+
+        const recognition = new SpeechRecognition();
+        recognition.lang = 'zh-TW';
+        recognition.continuous = false;
+
+        recognition.onstart = function() {
+            alert("🎙️ 開始錄音！請直接說出心得，說完後請停頓或等待自動結束...");
+        };
+
+        recognition.onresult = function(event) {
+            const transcript = event.results[0][0].transcript;
+            const textarea = document.getElementById(targetTextareaId);
+            textarea.value = textarea.value ? `${textarea.value}\n${transcript}` : transcript;
+        };
+
+        recognition.onerror = function(event) {
+            alert(`❌ 語音辨識出錯：${event.error}`);
+        };
+
+        recognition.start();
+    }
+
+    // 💰 房貸試算算盤
+    function calculateMortgage(mode) {
+        const priceId = mode === 'new' ? 'price' : 'e_price';
+        const loanRatioId = mode === 'new' ? 'loanRatio' : 'e_loanRatio';
+        const loanRateId = mode === 'new' ? 'loanRate' : 'e_loanRate';
+        const loanYearsId = mode === 'new' ? 'loanYears' : 'e_loanYears';
+        const graceYearsId = mode === 'new' ? 'graceYears' : 'e_graceYears';
+        const resultId = mode === 'new' ? 'mortgageResultNew' : 'mortgageResultEdit';
+
+        const price = parseFloat(document.getElementById(priceId).value);
+        if (!price || price <= 0) {
+            document.getElementById(resultId).innerHTML = "💡 請輸入開價總價即可算出自備款與月繳金額";
+            return;
+        }
+
+        const ratio = parseFloat(document.getElementById(loanRatioId).value);
+        const annualRate = parseFloat(document.getElementById(loanRateId).value) / 100;
+        const totalYears = parseInt(document.getElementById(loanYearsId).value);
+        const graceYears = parseInt(document.getElementById(graceYearsId).value);
+
+        const selfPay = Math.round(price * (1 - ratio));
+        const loanAmount = price * ratio * 10000;
+        const monthlyRate = annualRate / 12;
+        const totalMonths = totalYears * 12;
+        const graceMonths = graceYears * 12;
+
+        let graceMonthly = Math.round((loanAmount * annualRate) / 12);
+        let normalMonthly = 0;
+
+        if (monthlyRate === 0) {
+            normalMonthly = Math.round(loanAmount / (totalMonths - graceMonths));
+        } else {
+            const remainMonths = totalMonths - graceMonths;
+            normalMonthly = Math.round(
+                (loanAmount * Math.pow(1 + monthlyRate, remainMonths) * monthlyRate) /
+                (Math.pow(1 + monthlyRate, remainMonths) - 1)
+            );
+        }
+
+        let html = `💵 <b>自備款 (${Math.round((1-ratio)*100)}%)：</b> <span style="color:#dc2626; font-weight:bold;">${selfPay} 萬元</span> | <b>貸款金額：</b> ${Math.round(price*ratio)} 萬<br>`;
+        if (graceYears > 0) {
+            html += `🗓️ <b>寬限期 (${graceYears}年) 月繳：</b> 約 <span style="color:#2563eb; font-weight:bold;">${graceMonthly.toLocaleString()} 元/月</span><br>`;
+            html += `🗓️ <b>寬限期後 (${totalYears-graceYears}年) 月繳：</b> 約 <span style="color:#166534; font-weight:bold;">${normalMonthly.toLocaleString()} 元/月</span>`;
+        } else {
+            html += `🗓️ <b>每月本息攤還：</b> 約 <span style="color:#166534; font-weight:bold;">${normalMonthly.toLocaleString()} 元/月</span>`;
+        }
+
+        document.getElementById(resultId).innerHTML = html;
+    }
+
     function getNextAutoCode() {
         let maxNum = 0;
         properties.forEach(p => {
@@ -509,7 +777,6 @@
         return `#${nextNum < 10 ? '0' + nextNum : nextNum}`;
     }
 
-    // 更新新增表單的預設編號
     function updateAutoCodeField() {
         const codeInput = document.getElementById('code');
         if (codeInput) {
@@ -517,7 +784,6 @@
         }
     }
 
-    // 當切換狀態時，自動聯動切換星級評價
     function handleStatusChange(mode) {
         const statusEl = document.getElementById(mode === 'new' ? 'status' : 'e_status');
         const ratingEl = document.getElementById(mode === 'new' ? 'rating' : 'e_rating');
@@ -529,7 +795,6 @@
         }
     }
 
-    // 啟動親自地圖點擊選點模式（暫時隱藏編輯彈窗）
     function startMapPick() {
         isMapPickingMode = true;
         document.getElementById('detailModal').style.display = 'none';
@@ -542,7 +807,6 @@
         document.getElementById('detailModal').style.display = 'flex';
     }
 
-    // 精準純文字地址/社區名稱自動定位 (完全排除社區物件長標題欄位)
     async function geocodeAddress(mode) {
         const addrInputId = mode === 'new' ? 'address' : 'e_address';
         const rawInput = document.getElementById(addrInputId).value.trim();
@@ -624,7 +888,7 @@
         if (token) {
             document.getElementById('githubToken').value = token;
             try {
-                const apiRes = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/${GITHUB_FILE_PATH}`, {
+                const apiRes = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/${GITHUB_FILE_PATH}?t=${Date.now()}`, {
                     headers: { 'Authorization': `token ${token}` }
                 });
                 if (apiRes.ok) {
@@ -634,10 +898,13 @@
             } catch(e) { console.error("SHA 獲取失敗：", e); }
         }
 
+        const localData = localStorage.getItem('淡水看房地圖資料');
+        
         try {
             const response = await fetch(`./${GITHUB_FILE_PATH}?t=${Date.now()}`);
             if (response.ok) {
-                properties = await response.json();
+                const cloudData = await response.json();
+                properties = localData ? JSON.parse(localData) : cloudData;
                 statusEl.innerText = token ? "🟢 雲端同步連線正常 (來自 GitHub)" : "⚠️ 未設定 Token，只能讀取無法同步存檔";
                 statusEl.style.color = token ? "#166534" : "#d97706";
             } else {
@@ -647,7 +914,7 @@
             console.error("讀取本地/相對檔案失敗：", e);
             statusEl.innerText = "⚠️ 使用本地備份模式";
             statusEl.style.color = "#d97706";
-            properties = JSON.parse(localStorage.getItem('淡水看房地圖資料')) || [];
+            properties = localData ? JSON.parse(localData) : [];
         }
         render();
         updateAutoCodeField();
@@ -787,10 +1054,22 @@
         const tbody = document.getElementById('dataBody');
         tbody.innerHTML = '';
 
+        const searchQuery = (document.getElementById('searchInput')?.value || '').toLowerCase().trim();
+        const maxPrice = parseFloat(document.getElementById('priceRange')?.value || 3000);
+
         let sortedProperties = [...properties].sort((a, b) => (parseInt(b.rating) || 0) - (parseInt(a.rating) || 0));
 
         let filteredProperties = sortedProperties.filter(p => {
             const r = parseInt(p.rating) || 0;
+            const price = parseFloat(p.price) || 0;
+
+            if (maxPrice < 3000 && price > maxPrice) return false;
+
+            if (searchQuery) {
+                const fullStr = `${p.code} ${p.name} ${p.address} ${p.notes} ${p.parkingType} ${(p.pros||[]).join(' ')} ${(p.cons||[]).join(' ')}`.toLowerCase();
+                if (!fullStr.includes(searchQuery)) return false;
+            }
+
             if (currentFilter === 'pending') {
                 return (p.status || '').includes("網路收藏") || (p.status || '').includes("已預約帶看");
             }
@@ -838,6 +1117,7 @@
                 else if ((p.status || '').includes("🟢")) bgColor = "#22c55e";
                 else if ((p.status || '').includes("🟡")) bgColor = "#eab308";
                 else if ((p.status || '').includes("🔴")) bgColor = "#ef4444";
+                else if ((p.status || '').includes("已售出") || (p.status || '').includes("已下架")) bgColor = "#64748b";
 
                 const customIcon = L.divIcon({
                     className: 'custom-pin',
@@ -1098,6 +1378,7 @@
                         <option value="🟡 保留觀察" ${p.status==='🟡 保留觀察'?'selected':''}>🟡 保留觀察</option>
                         <option value="🟢 優先考慮" ${p.status==='🟢 優先考慮'?'selected':''}>🟢 優先考慮</option>
                         <option value="🔴 直接排除" ${p.status==='🔴 直接排除'?'selected':''}>🔴 直接排除</option>
+                        <option value="❌ 已售出/已下架" ${p.status==='❌ 已售出/已下架'?'selected':''}>❌ 已售出/已下架</option>
                     </select>
                 </div>
 
@@ -1120,6 +1401,7 @@
                         <input type="text" id="e_address" value="${p.address || ''}" placeholder="請輸入地址">
                         <button type="button" class="btn" onclick="geocodeAddress('edit')" style="padding:6px 10px; font-size:0.8rem; white-space:nowrap; background:#475569;">🔍 自動定位</button>
                         <button type="button" class="btn" onclick="startMapPick()" style="padding:6px 10px; font-size:0.8rem; white-space:nowrap; background:#2563eb;">📍 在地圖上選點</button>
+                        <button type="button" class="btn" onclick="getGPSLocation('edit')" style="padding:6px 10px; font-size:0.8rem; white-space:nowrap; background:#059669;">📱 GPS定位</button>
                     </div>
                 </div>
 
@@ -1168,8 +1450,20 @@
                 <div class="form-group"><label>樓層</label><input type="text" id="e_floor" value="${p.floor || ''}"></div>
 
                 <div class="form-group full" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 0;">
-                    <div class="form-group"><label>開價 (萬)</label><input type="number" id="e_price" value="${p.price || ''}"></div>
+                    <div class="form-group"><label>開價 (萬)</label><input type="number" id="e_price" value="${p.price || ''}" oninput="calculateMortgage('edit')"></div>
                     <div class="form-group"><label>換算開價單價 (萬/坪)</label><input type="number" step="0.1" id="e_unitPrice" value="${p.unitPrice || ''}"></div>
+                </div>
+
+                <!-- 💰 編輯 Modal 的房貸計算器 -->
+                <div class="form-group full calc-box">
+                    <div class="calc-title">💰 房貸與自備款自動試算</div>
+                    <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:8px;">
+                        <div><label>貸款成數</label><select id="e_loanRatio" onchange="calculateMortgage('edit')"><option value="0.8" selected>8 成</option><option value="0.85">8.5 成</option><option value="0.7">7 成</option></select></div>
+                        <div><label>年利率 (%)</label><input type="number" id="e_loanRate" value="2.185" step="0.01" oninput="calculateMortgage('edit')"></div>
+                        <div><label>貸款年限</label><select id="e_loanYears" onchange="calculateMortgage('edit')"><option value="30" selected>30 年</option><option value="40">40 年</option><option value="20">20 年</option></select></div>
+                        <div><label>寬限期 (年)</label><select id="e_graceYears" onchange="calculateMortgage('edit')"><option value="0" selected>無寬限期</option><option value="3">3 年</option><option value="5">5 年</option></select></div>
+                    </div>
+                    <div class="calc-result" id="mortgageResultEdit">💡 請輸入開價總價即可算出自備款與月繳金額</div>
                 </div>
 
                 <div class="form-group full" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 0;">
@@ -1208,12 +1502,16 @@
             </div>
 
             <div class="form-group">
-                <label>修改心得筆記</label>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                    <label style="margin:0;">修改心得筆記</label>
+                    <button type="button" class="btn" onclick="startSpeechRecognition('e_notes')" style="padding:3px 8px; font-size:0.78rem; background:#8b5cf6;">🎙️ 語音轉文字筆記</button>
+                </div>
                 <textarea id="e_notes" rows="3">${p.notes || ''}</textarea>
             </div>
         `;
 
         renderImagePreviews('edit');
+        calculateMortgage('edit');
 
         document.getElementById('modalFooter').innerHTML = `
             <div></div>
@@ -1309,7 +1607,9 @@
         render();
         pushToGitHub();
         document.getElementById('houseForm').reset();
+        document.getElementById('smartPasteText').value = '';
         updateAutoCodeField();
+        document.getElementById('mortgageResultNew').innerHTML = "💡 請輸入開價總價即可算出自備款與月繳金額";
     }
 
     function deleteItem(index) {
