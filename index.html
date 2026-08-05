@@ -82,7 +82,7 @@
         .item-link { color: var(--primary); font-weight: bold; cursor: pointer; text-decoration: none; }
         .item-link:hover { text-decoration: underline; color: #1d4ed8; }
 
-        .custom-marker { display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 11px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.4); }
+        .custom-marker { display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 11px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.4); cursor: grab; }
 
         /* Modal */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 9999; }
@@ -448,6 +448,7 @@
     let currentImgIndex = 0;
     let map, mapMarkers = [];
     let tempMarker = null;
+    let currentEditingIndex = -1; // 當前正在編輯的物件 Index
 
     document.addEventListener("DOMContentLoaded", function() {
         const savedToken = localStorage.getItem('github_token');
@@ -513,11 +514,9 @@
             return;
         }
 
-        // 去除多餘行政區字眼，組出乾淨的搜尋詞
         let cleanText = rawInput.replace(/大庄里|中興里|水興里|竿蓁里|坎頂里/g, '').trim();
         let searchQueries = [];
 
-        // 判斷是否已經有「淡水」字樣，沒有就自動補上
         if (cleanText.includes('淡水')) {
             searchQueries.push(cleanText);
         } else {
@@ -525,7 +524,6 @@
             searchQueries.push(`淡水 ${cleanText}`);
         }
 
-        // 如果含有樓層，去掉樓層再搜一次備援 (例: 新民街322巷4號4樓 ➜ 新民街322巷4號)
         if (cleanText.includes('樓') || cleanText.includes('F')) {
             let noFloor = cleanText.split(/[0-9]+樓|[0-9]+F/i)[0].trim();
             if (noFloor) searchQueries.push(noFloor.includes('淡水') ? noFloor : `淡水 ${noFloor}`);
@@ -556,13 +554,18 @@
             } else {
                 document.getElementById('e_lat').value = lat;
                 document.getElementById('e_lng').value = lng;
+                if (currentEditingIndex >= 0 && mapMarkers[currentEditingIndex]) {
+                    mapMarkers[currentEditingIndex].setLatLng([lat, lng]);
+                }
             }
 
             if (map) {
                 map.setView([lat, lng], 16);
-                if (tempMarker) map.removeLayer(tempMarker);
-                tempMarker = L.marker([lat, lng]).addTo(map)
-                    .bindPopup(`📍 定位成功：${cleanText}`).openPopup();
+                if (mode === 'new') {
+                    if (tempMarker) map.removeLayer(tempMarker);
+                    tempMarker = L.marker([lat, lng]).addTo(map)
+                        .bindPopup(`📍 已自動定位：${cleanText}`).openPopup();
+                }
             }
             alert(`✅ 定位成功！座標已自動更新為：${lat}, ${lng}`);
         } else {
@@ -708,12 +711,22 @@
         map.on('click', function(e) {
             const lat = e.latlng.lat.toFixed(5);
             const lng = e.latlng.lng.toFixed(5);
-            document.getElementById('lat').value = lat;
-            document.getElementById('lng').value = lng;
 
-            if (tempMarker) map.removeLayer(tempMarker);
-            tempMarker = L.marker([lat, lng]).addTo(map)
-                .bindPopup("📍 已選取座標，請填寫右側表單後儲存。").openPopup();
+            // 如果正在編輯物件，點地圖直接更新該物件座標！
+            if (currentEditingIndex >= 0) {
+                document.getElementById('e_lat').value = lat;
+                document.getElementById('e_lng').value = lng;
+                if (mapMarkers[currentEditingIndex]) {
+                    mapMarkers[currentEditingIndex].setLatLng([lat, lng]);
+                }
+            } else {
+                document.getElementById('lat').value = lat;
+                document.getElementById('lng').value = lng;
+
+                if (tempMarker) map.removeLayer(tempMarker);
+                tempMarker = L.marker([lat, lng]).addTo(map)
+                    .bindPopup("📍 已選取座標，請填寫右側表單後儲存。").openPopup();
+            }
         });
 
         render();
@@ -795,7 +808,24 @@
                     iconAnchor: [14, 14]
                 });
 
-                const marker = L.marker([p.lat, p.lng], { icon: customIcon }).addTo(map);
+                // 是否為當前正在編輯的物件？如果是，開啟拖曳 (draggable)
+                const isEditing = (originalIndex === currentEditingIndex);
+                const marker = L.marker([p.lat, p.lng], { 
+                    icon: customIcon,
+                    draggable: isEditing 
+                }).addTo(map);
+
+                // 拖曳結束事件
+                if (isEditing) {
+                    marker.on('dragend', function(e) {
+                        const newPos = e.target.getLatLng();
+                        const lat = newPos.lat.toFixed(5);
+                        const lng = newPos.lng.toFixed(5);
+                        document.getElementById('e_lat').value = lat;
+                        document.getElementById('e_lng').value = lng;
+                    });
+                }
+
                 marker.bindPopup(`
                     <div style="font-size:13px; line-height:1.5;">
                         <b>[${p.code}] ${p.name}</b> (${p.layout || ''} | ${p.purpose || ''})<br>
@@ -807,7 +837,7 @@
                     </div>
                 `);
 
-                mapMarkers.push(marker);
+                mapMarkers[originalIndex] = marker;
             }
         });
     }
@@ -925,6 +955,9 @@
     });
 
     function showDetail(index) {
+        currentEditingIndex = -1; // 重置編輯狀態
+        render(); // 恢復標籤不可拖曳
+
         const p = properties[index];
         document.getElementById('modalTitle').innerText = `[${p.code}] ${p.name}`;
         
@@ -1004,9 +1037,17 @@
         `;
 
         document.getElementById('detailModal').style.display = 'flex';
+
+        // 移到地圖該物件位置
+        if (map && p.lat && p.lng) {
+            map.setView([p.lat, p.lng], 16);
+        }
     }
 
     function editDetail(index) {
+        currentEditingIndex = index; // 標記為正在編輯狀態
+        render(); // 觸發使地圖上的這個 Marker 變成可拖曳 (draggable)
+
         const p = properties[index];
         editTempImages = p.images ? [...p.images] : [];
 
@@ -1033,6 +1074,10 @@
         }
 
         document.getElementById('modalBody').innerHTML = `
+            <div style="background:#fef3c7; border:1px solid #fde68a; color:#92400e; padding:8px 12px; border-radius:6px; font-size:0.85rem; margin-bottom:12px;">
+                💡 <b>定位微調提示：</b> 您現在可以直接在左側地圖上<b>用滑鼠按住 [${p.code}] 標籤拖曳移動</b>，或是直接在<b>地圖上點擊</b>，即可修正到精確位置！
+            </div>
+
             <div class="form-grid">
                 <div class="form-group"><label>編號</label><input type="text" id="e_code" value="${p.code || ''}"></div>
                 <div class="form-group">
@@ -1163,9 +1208,15 @@
             <div></div>
             <div>
                 <button onclick="saveEdit(${index})" class="btn-save">💾 儲存修改 (同步至 GitHub)</button>
-                <button onclick="showDetail(${index})" class="btn" style="background:#64748b; margin-left:5px;">取消</button>
+                <button onclick="cancelEdit(${index})" class="btn" style="background:#64748b; margin-left:5px;">取消</button>
             </div>
         `;
+    }
+
+    function cancelEdit(index) {
+        currentEditingIndex = -1;
+        render();
+        showDetail(index);
     }
 
     function saveEdit(index) {
@@ -1202,12 +1253,15 @@
         if (document.getElementById('e_lat').value) properties[index].lat = document.getElementById('e_lat').value;
         if (document.getElementById('e_lng').value) properties[index].lng = document.getElementById('e_lng').value;
 
+        currentEditingIndex = -1; // 編輯完成重置
         render();
         pushToGitHub();
         showDetail(index);
     }
 
     function closeModal() {
+        currentEditingIndex = -1;
+        render();
         document.getElementById('detailModal').style.display = 'none';
     }
 
@@ -1259,6 +1313,7 @@
     function deleteItem(index) {
         if(confirm('確定要刪除這筆物件紀錄嗎？這會同步刪除 GitHub 上的紀錄！')) {
             properties.splice(index, 1);
+            currentEditingIndex = -1;
             closeModal();
             render();
             pushToGitHub();
