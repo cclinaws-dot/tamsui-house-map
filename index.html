@@ -141,7 +141,7 @@
                 <span class="sync-status" id="syncStatus">🔍 讀取雲端資料中...</span>
             </div>
             <div style="display: flex; gap: 8px;">
-                <input type="password" id="githubToken" placeholder="第一次使用請貼入 GitHub Personal Token (ghp_...)" style="flex:1;">
+                <input type="password" id="githubToken" placeholder="請貼入 GitHub Personal Token (ghp_...)" style="flex:1;">
                 <button onclick="saveToken()" class="btn" style="padding: 6px 12px; font-size: 0.8rem;">💾 儲存 Key</button>
             </div>
         </div>
@@ -540,7 +540,7 @@
         const token = document.getElementById('githubToken').value.trim();
         if (token) {
             localStorage.setItem('github_token', token);
-            alert("Token 已儲存！");
+            alert("Token 已被永久寫入瀏覽器！");
             fetchGitHubData();
         } else {
             alert("請貼入有效的 GitHub Token！");
@@ -555,59 +555,33 @@
             return;
         }
 
-        // 1. 拆解開價 (萬)
         const priceMatch = text.match(/(?:開價|售價|總價|💰|價)[\s｜:|：]*(\d+)\s*萬/i) || text.match(/(\d+)\s*萬/);
-        if (priceMatch) {
-            document.getElementById('price').value = priceMatch[1];
-        }
+        if (priceMatch) document.getElementById('price').value = priceMatch[1];
 
-        // 2. 拆解格局 (例: 2房2廳1衛 / 2房(室)2廳2衛)
         const layoutMatch = text.match(/\d+[\s]*房\([室s]\)[\s]*\d+[\s]*廳[\s]*\d+[\s]*衛/i) || text.match(/\d+[\s]*房[\s]*\d+[\s]*廳[\s]*\d+[\s]*衛/i) || text.match(/\d+[\s]*房[\s]*\d+[\s]*衛/i);
-        if (layoutMatch) {
-            document.getElementById('layout').value = layoutMatch[0].replace(/\([室s]\)/g, '');
-        }
+        if (layoutMatch) document.getElementById('layout').value = layoutMatch[0].replace(/\([室s]\)/g, '');
 
-        // 3. 拆解權狀總坪數
         const totalPingMatch = text.match(/(?:建物坪數|總坪數|建物總坪|坪數)[\s｜:|：]*(\d+(?:\.\d+)?)\s*坪/i);
-        if (totalPingMatch) {
-            document.getElementById('totalPing').value = totalPingMatch[1];
-        }
+        if (totalPingMatch) document.getElementById('totalPing').value = totalPingMatch[1];
 
-        // 4. 拆解主建物/主+附坪數
         const innerPingMatch = text.match(/(?:主建物|主+附|室內)[\s｜:|：]*(\d+(?:\.\d+)?)\s*坪/i);
-        if (innerPingMatch) {
-            document.getElementById('innerPing').value = innerPingMatch[1];
-        }
+        if (innerPingMatch) document.getElementById('innerPing').value = innerPingMatch[1];
 
-        // 5. 拆解車位坪數
         const parkingPingMatch = text.match(/(?:含車位|車位坪數|車位)[\s｜:|：]*(\d+(?:\.\d+)?)\s*坪/i);
-        if (parkingPingMatch) {
-            document.getElementById('parkingPing').value = parkingPingMatch[1];
-        }
+        if (parkingPingMatch) document.getElementById('parkingPing').value = parkingPingMatch[1];
 
-        // 6. 拆解車位類型
         if (text.includes("平面")) document.getElementById('parkingType').value = "坡道平面";
         else if (text.includes("機械")) document.getElementById('parkingType').value = "坡道機械";
 
-        // 7. 拆解樓層
         const floorMatch = text.match(/樓層[\s｜:|：]*(\d+[\s]*[樓F]\s*[\/／]\s*共?[\s]*\d+[\s]*[樓F])/i) || text.match(/(\d+[\s]*[樓F]\s*[\/／]\s*共?[\s]*\d+[\s]*[樓F])/i);
-        if (floorMatch) {
-            document.getElementById('floor').value = floorMatch[1].replace(/\s+/g, '');
-        }
+        if (floorMatch) document.getElementById('floor').value = floorMatch[1].replace(/\s+/g, '');
 
-        // 8. 拆解屋齡
         const ageMatch = text.match(/屋齡[\s｜:|：]*約?[\s]*(\d+(?:\.\d+)?)\s*年/i);
-        if (ageMatch) {
-            document.getElementById('age').value = ageMatch[1];
-        }
+        if (ageMatch) document.getElementById('age').value = ageMatch[1];
 
-        // 9. 拆解地址
         const addrMatch = text.match(/(新北市淡水區[^\n\r,，]+|淡水區[^\n\r,，]+|新春街[^\n\r,，]+|濱海路[^\n\r,，]+|沙崙路[^\n\r,，]+|新民街[^\n\r,，]+)/i);
-        if (addrMatch) {
-            document.getElementById('address').value = addrMatch[1].trim();
-        }
+        if (addrMatch) document.getElementById('address').value = addrMatch[1].trim();
 
-        // 10. 拆解社區/物件名稱
         const nameMatch = text.match(/(?:社區名稱|案名|📍)[\s｜:|：]*([^\n\r]+)/i);
         if (nameMatch) {
             document.getElementById('name').value = nameMatch[1].replace(/【|】|🌿|✨/g, '').trim();
@@ -616,26 +590,17 @@
             if (firstLine) document.getElementById('name').value = firstLine.substring(0, 30);
         }
 
-        // 11. 拆解網址與聯絡資訊
         const urlMatch = text.match(/(https?:\/\/[^\s]+)/i);
-        if (urlMatch) {
-            document.getElementById('sourceUrl').value = urlMatch[1];
-        }
+        if (urlMatch) document.getElementById('sourceUrl').value = urlMatch[1];
 
         const phoneMatch = text.match(/(09\d{2}[-\s]?\d{3}[-\s]?\d{3})/);
         const agentMatch = text.match(/([一-龥]{2,4}\s*(?:房仲|有巢氏|永慶|台慶|大家房屋|房東))/i);
-        if (phoneMatch) {
-            document.getElementById('contactInfo').value = `${agentMatch ? agentMatch[1] : ''} ${phoneMatch[1]}`.trim();
-        }
+        if (phoneMatch) document.getElementById('contactInfo').value = `${agentMatch ? agentMatch[1] : ''} ${phoneMatch[1]}`.trim();
 
-        // 12. 備註寫入全文
         document.getElementById('notes').value = text;
 
-        // 自動觸發試算與定位
         calculateMortgage('new');
-        if (document.getElementById('address').value) {
-            geocodeAddress('new');
-        }
+        if (document.getElementById('address').value) geocodeAddress('new');
 
         alert("⚡ 自動拆解完成！請檢查下方欄位確認無誤。");
     }
@@ -645,15 +610,13 @@
         render();
     }
 
-    // 📱 GPS 現場定位功能
     function getGPSLocation(mode) {
         if (!navigator.geolocation) {
-            alert("您的裝置或瀏覽器不支援 GPS 定位服務！");
+            alert("您的裝置不支援 GPS 定位！");
             return;
         }
 
-        alert("📍 正在獲取您的手機 GPS 位置，請允許存取位置權限...");
-
+        alert("📍 正在獲取 GPS 位置，請允許存取權限...");
         navigator.geolocation.getCurrentPosition(
             (position) => {
                 const lat = position.coords.latitude.toFixed(5);
@@ -671,24 +634,20 @@
                     map.setView([lat, lng], 17);
                     if (mode === 'new') {
                         if (tempMarker) map.removeLayer(tempMarker);
-                        tempMarker = L.marker([lat, lng]).addTo(map)
-                            .bindPopup("📍 GPS 現場定位成功！").openPopup();
+                        tempMarker = L.marker([lat, lng]).addTo(map).bindPopup("📍 GPS 現場定位成功！").openPopup();
                     }
                 }
                 alert(`✅ GPS 定位成功！座標：${lat}, ${lng}`);
             },
-            (error) => {
-                alert(`❌ GPS 定位失敗：${error.message}`);
-            },
+            (error) => alert(`❌ GPS 定位失敗：${error.message}`),
             { enableHighAccuracy: true, timeout: 10000 }
         );
     }
 
-    // 🎙️ Web Speech 語音轉文字功能
     function startSpeechRecognition(targetTextareaId) {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (!SpeechRecognition) {
-            alert("您的瀏覽器不支援語音辨識（建議使用 Chrome/Safari）！");
+            alert("您的瀏覽器不支援語音辨識（建議使用 Chrome）！");
             return;
         }
 
@@ -697,7 +656,7 @@
         recognition.continuous = false;
 
         recognition.onstart = function() {
-            alert("🎙️ 開始錄音！請直接說出心得，說完後請停頓或等待自動結束...");
+            alert("🎙️ 開始錄音！請直接說出心得...");
         };
 
         recognition.onresult = function(event) {
@@ -713,7 +672,6 @@
         recognition.start();
     }
 
-    // 💰 房貸試算算盤
     function calculateMortgage(mode) {
         const priceId = mode === 'new' ? 'price' : 'e_price';
         const loanRatioId = mode === 'new' ? 'loanRatio' : 'e_loanRatio';
@@ -768,9 +726,7 @@
         properties.forEach(p => {
             if (p.code) {
                 const num = parseInt(p.code.replace(/[^0-9]/g, ''), 10);
-                if (!isNaN(num) && num > maxNum) {
-                    maxNum = num;
-                }
+                if (!isNaN(num) && num > maxNum) maxNum = num;
             }
         });
         const nextNum = maxNum + 1;
@@ -779,9 +735,7 @@
 
     function updateAutoCodeField() {
         const codeInput = document.getElementById('code');
-        if (codeInput) {
-            codeInput.value = getNextAutoCode();
-        }
+        if (codeInput) codeInput.value = getNextAutoCode();
     }
 
     function handleStatusChange(mode) {
@@ -819,9 +773,8 @@
         let cleanText = rawInput.replace(/大庄里|中興里|水興里|竿蓁里|坎頂里/g, '').trim();
         let searchQueries = [];
 
-        if (cleanText.includes('淡水')) {
-            searchQueries.push(cleanText);
-        } else {
+        if (cleanText.includes('淡水')) searchQueries.push(cleanText);
+        else {
             searchQueries.push(`新北市淡水區${cleanText}`);
             searchQueries.push(`淡水 ${cleanText}`);
         }
@@ -862,13 +815,12 @@
                 map.setView([lat, lng], 16);
                 if (mode === 'new') {
                     if (tempMarker) map.removeLayer(tempMarker);
-                    tempMarker = L.marker([lat, lng]).addTo(map)
-                        .bindPopup(`📍 已自動定位：${cleanText}`).openPopup();
+                    tempMarker = L.marker([lat, lng]).addTo(map).bindPopup(`📍 已自動定位：${cleanText}`).openPopup();
                 }
             }
             alert(`✅ 定位成功！座標已自動更新為：${lat}, ${lng}`);
         } else {
-            alert(`⚠️ 找不到「${rawInput}」的確切座標！\n建議直接點選「📍 在地圖上選點」直接標記位置！`);
+            alert(`⚠️ 找不到「${rawInput}」的確切座標！\n建議直接點選「📍 在地圖上選點」標記位置！`);
         }
     }
 
@@ -879,6 +831,7 @@
             }));
     }
 
+    // 防卡死帶有逾時設定的 GitHub 讀取引擎
     async function fetchGitHubData() {
         const statusEl = document.getElementById('syncStatus');
         statusEl.innerText = "⏳ 正在讀取雲端資料...";
@@ -887,36 +840,54 @@
         const token = localStorage.getItem('github_token') || document.getElementById('githubToken').value.trim();
         if (token) {
             document.getElementById('githubToken').value = token;
+        }
+
+        // 1. 優先使用本地備份防卡死
+        const localData = localStorage.getItem('淡水看房地圖資料');
+        if (localData) {
             try {
+                properties = JSON.parse(localData);
+                render();
+            } catch(e) { console.error("本地資料解析失敗:", e); }
+        }
+
+        // 2. 5秒逾時控制
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+        try {
+            if (token) {
                 const apiRes = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/${GITHUB_FILE_PATH}?t=${Date.now()}`, {
-                    headers: { 'Authorization': `token ${token}` }
+                    headers: { 'Authorization': `token ${token}` },
+                    signal: controller.signal
                 });
                 if (apiRes.ok) {
                     const apiData = await apiRes.json();
                     fileSHA = apiData.sha;
                 }
-            } catch(e) { console.error("SHA 獲取失敗：", e); }
-        }
+            }
 
-        const localData = localStorage.getItem('淡水看房地圖資料');
-        
-        try {
-            const response = await fetch(`./${GITHUB_FILE_PATH}?t=${Date.now()}`);
+            const response = await fetch(`./${GITHUB_FILE_PATH}?t=${Date.now()}`, { signal: controller.signal });
+            clearTimeout(timeoutId);
+
             if (response.ok) {
                 const cloudData = await response.json();
-                properties = localData ? JSON.parse(localData) : cloudData;
-                statusEl.innerText = token ? "🟢 雲端同步連線正常 (來自 GitHub)" : "⚠️ 未設定 Token，只能讀取無法同步存檔";
+                if (!localData) {
+                    properties = cloudData;
+                    render();
+                }
+                statusEl.innerText = token ? "🟢 雲端同步連線正常 (來自 GitHub)" : "⚠️ 未設定 Token，貼入 Token 按儲存即可連線";
                 statusEl.style.color = token ? "#166534" : "#d97706";
             } else {
                 throw new Error("找不到 data.json");
             }
         } catch (e) {
-            console.error("讀取本地/相對檔案失敗：", e);
-            statusEl.innerText = "⚠️ 使用本地備份模式";
+            clearTimeout(timeoutId);
+            console.warn("雲端連線逾時或未連線，啟用本地模式：", e);
+            statusEl.innerText = token ? "🟢 本地快取就緒 (請確認 Token 權限)" : "⚠️ 請在右上角貼入 Token 密碼按儲存連線";
             statusEl.style.color = "#d97706";
-            properties = localData ? JSON.parse(localData) : [];
         }
-        render();
+
         updateAutoCodeField();
     }
 
