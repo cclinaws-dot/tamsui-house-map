@@ -169,9 +169,9 @@
                     </div>
 
                     <div class="form-group full">
-                        <label>📍 詳細地址 (或輸入社區名稱，點右側按鈕自動定位)</label>
+                        <label>📍 詳細地址 (或直接填社區名，點右側按鈕自動定位)</label>
                         <div style="display:flex; gap:6px;">
-                            <input type="text" id="address" placeholder="例: 新北市淡水區沙崙路二段863號 或 江南大宅">
+                            <input type="text" id="address" placeholder="例: 淡水區新民街322巷4號 或 台北灣">
                             <button type="button" class="btn" onclick="geocodeAddress('new')" style="padding:6px 10px; font-size:0.8rem; white-space:nowrap; background:#475569;">🔍 自動定位</button>
                         </div>
                     </div>
@@ -503,32 +503,32 @@
         }
     }
 
-    // 升級版地址與社區名稱自動定位 (多重搜尋備援)
+    // 精準純文字地址/社區名稱自動定位 (完全排除社區物件長標題欄位)
     async function geocodeAddress(mode) {
         const addrInputId = mode === 'new' ? 'address' : 'e_address';
-        const nameInputId = mode === 'new' ? 'name' : 'e_name';
-        
-        const address = document.getElementById(addrInputId).value.trim();
-        const name = document.getElementById(nameInputId).value.trim();
+        const rawInput = document.getElementById(addrInputId).value.trim();
 
-        if (!address && !name) {
-            alert("請至少輸入「詳細地址」或「社區名稱」其中一項再點擊定位！");
+        if (!rawInput) {
+            alert("請先在「📍 詳細地址」輸入欄填入地址或社區名稱再點擊定位！");
             return;
         }
 
-        // 整理搜尋關鍵字組合
+        // 去除多餘行政區字眼，組出乾淨的搜尋詞
+        let cleanText = rawInput.replace(/大庄里|中興里|水興里|竿蓁里|坎頂里/g, '').trim();
         let searchQueries = [];
-        
-        // 提取社區名稱關鍵字 (例如從 "名軒海樂地 14F 美兩房" 提取出 "名軒海樂地")
-        let cleanName = name ? name.split(' ')[0] : '';
 
-        if (address && cleanName) searchQueries.push(`淡水 ${cleanName} ${address}`);
-        if (cleanName) searchQueries.push(`淡水 ${cleanName}`);
-        if (address) {
-            // 嘗試清洗地址（移除里名等過於細瑣資訊）
-            let cleanAddr = address.replace(/大庄里|中興里|水興里|竿蓁里/g, '');
-            searchQueries.push(cleanAddr.includes('淡水') ? cleanAddr : `新北市淡水區${cleanAddr}`);
-            searchQueries.push(`淡水 ${cleanAddr.split('號')[0]}`); // 退回只搜路名與號
+        // 判斷是否已經有「淡水」字樣，沒有就自動補上
+        if (cleanText.includes('淡水')) {
+            searchQueries.push(cleanText);
+        } else {
+            searchQueries.push(`新北市淡水區${cleanText}`);
+            searchQueries.push(`淡水 ${cleanText}`);
+        }
+
+        // 如果含有樓層，去掉樓層再搜一次備援 (例: 新民街322巷4號4樓 ➜ 新民街322巷4號)
+        if (cleanText.includes('樓') || cleanText.includes('F')) {
+            let noFloor = cleanText.split(/[0-9]+樓|[0-9]+F/i)[0].trim();
+            if (noFloor) searchQueries.push(noFloor.includes('淡水') ? noFloor : `淡水 ${noFloor}`);
         }
 
         let foundResult = null;
@@ -539,10 +539,10 @@
                 const data = await res.json();
                 if (data && data.length > 0) {
                     foundResult = { data: data[0], query: query };
-                    break; // 找到即跳出
+                    break;
                 }
             } catch (e) {
-                console.error(`Query failed (${query}):`, e);
+                console.error(`Geocoding failed for (${query}):`, e);
             }
         }
 
@@ -562,11 +562,11 @@
                 map.setView([lat, lng], 16);
                 if (tempMarker) map.removeLayer(tempMarker);
                 tempMarker = L.marker([lat, lng]).addTo(map)
-                    .bindPopup(`📍 已自動定位：${cleanName || address}`).openPopup();
+                    .bindPopup(`📍 定位成功：${cleanText}`).openPopup();
             }
-            alert(`✅ 定位成功！座標已自動填入：${lat}, ${lng}\n(搜尋依據：${foundResult.query})`);
+            alert(`✅ 定位成功！座標已自動更新為：${lat}, ${lng}`);
         } else {
-            alert("⚠️ 找不到該地標的精確座標，建議直接在左側地圖上「手動點擊位置」進行標記！");
+            alert(`⚠️ 找不到「${rawInput}」的確切座標！\n建議直接在左側地圖上「點擊點位」手動標記！`);
         }
     }
 
