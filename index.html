@@ -540,7 +540,7 @@
         const token = document.getElementById('githubToken').value.trim();
         if (token) {
             localStorage.setItem('github_token', token);
-            alert("Token 已被永久寫入瀏覽器！");
+            alert("Token 已成功儲存！");
             fetchGitHubData();
         } else {
             alert("請貼入有效的 GitHub Token！");
@@ -831,7 +831,7 @@
             }));
     }
 
-    // 防卡死帶有逾時設定的 GitHub 讀取引擎
+    // ⚡ 100% 雲端優先速讀引擎 (修復 F5 復原與卡死防護)
     async function fetchGitHubData() {
         const statusEl = document.getElementById('syncStatus');
         statusEl.innerText = "⏳ 正在讀取雲端資料...";
@@ -842,52 +842,28 @@
             document.getElementById('githubToken').value = token;
         }
 
-        // 1. 優先使用本地備份防卡死
-        const localData = localStorage.getItem('淡水看房地圖資料');
-        if (localData) {
-            try {
-                properties = JSON.parse(localData);
-                render();
-            } catch(e) { console.error("本地資料解析失敗:", e); }
-        }
-
-        // 2. 5秒逾時控制
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 5000);
-
         try {
-            if (token) {
-                const apiRes = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/${GITHUB_FILE_PATH}?t=${Date.now()}`, {
-                    headers: { 'Authorization': `token ${token}` },
-                    signal: controller.signal
-                });
-                if (apiRes.ok) {
-                    const apiData = await apiRes.json();
-                    fileSHA = apiData.sha;
-                }
-            }
-
-            const response = await fetch(`./${GITHUB_FILE_PATH}?t=${Date.now()}`, { signal: controller.signal });
-            clearTimeout(timeoutId);
-
+            // 強制加上 timestamp 防止快取
+            const response = await fetch(`./${GITHUB_FILE_PATH}?t=${Date.now()}`);
             if (response.ok) {
                 const cloudData = await response.json();
-                if (!localData) {
-                    properties = cloudData;
-                    render();
-                }
-                statusEl.innerText = token ? "🟢 雲端同步連線正常 (來自 GitHub)" : "⚠️ 未設定 Token，貼入 Token 按儲存即可連線";
+                properties = cloudData;
+                localStorage.setItem('淡水看房地圖資料', JSON.stringify(properties)); // 備份防斷網
+                
+                statusEl.innerText = token ? "🟢 雲端同步連線正常 (來自 GitHub)" : "⚠️ 未設定 Token，只能讀取無法同步存檔";
                 statusEl.style.color = token ? "#166534" : "#d97706";
             } else {
                 throw new Error("找不到 data.json");
             }
         } catch (e) {
-            clearTimeout(timeoutId);
-            console.warn("雲端連線逾時或未連線，啟用本地模式：", e);
-            statusEl.innerText = token ? "🟢 本地快取就緒 (請確認 Token 權限)" : "⚠️ 請在右上角貼入 Token 密碼按儲存連線";
+            console.warn("讀取雲端失敗，降級使用 LocalStorage:", e);
+            const localData = localStorage.getItem('淡水看房地圖資料');
+            properties = localData ? JSON.parse(localData) : [];
+            statusEl.innerText = "⚠️ 離線備份模式";
             statusEl.style.color = "#d97706";
         }
 
+        render();
         updateAutoCodeField();
     }
 
@@ -905,6 +881,17 @@
 
         statusEl.innerText = "🔄 正在同步更新至 GitHub 雲端...";
         statusEl.style.color = "#2563eb";
+
+        // 先獲取最新 SHA 防止寫入衝突
+        try {
+            const apiShaRes = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/${GITHUB_FILE_PATH}?t=${Date.now()}`, {
+                headers: { 'Authorization': `token ${token}` }
+            });
+            if (apiShaRes.ok) {
+                const shaData = await apiShaRes.json();
+                fileSHA = shaData.sha;
+            }
+        } catch(e) { console.error("SHA 獲取失敗", e); }
 
         const jsonString = JSON.stringify(properties, null, 2);
         const contentBase64 = utf8ToB64(jsonString);
