@@ -184,7 +184,7 @@
                             <option value="5">⭐⭐⭐⭐⭐ (5星 - 極力推薦)</option>
                             <option value="4">⭐⭐⭐⭐ (4星 - 滿意考慮)</option>
                             <option value="3">⭐⭐⭐ (3星 - 普通尚可)</option>
-                            <option value="2">⭐⭐ (2星 - 缺點偏多)</option>
+                            <option value="2">⭐⭐ (2星 - 考慮度低)</option>
                             <option value="1">⭐ (1星 - 不考慮)</option>
                         </select>
                     </div>
@@ -844,14 +844,13 @@
             document.getElementById('githubToken').value = token;
         }
 
-        // 先優先載入 LocalStorage 呈現畫面，防止死白
         const localData = localStorage.getItem('淡水看房地圖資料');
         if (localData) {
             try { properties = JSON.parse(localData); } catch(e){}
         }
 
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 3000); // 3秒強行超時
+        const timeoutId = setTimeout(() => controller.abort(), 3000);
 
         try {
             const response = await fetch(`./${GITHUB_FILE_PATH}?t=${Date.now()}`, { signal: controller.signal });
@@ -871,7 +870,6 @@
             statusEl.innerText = token ? "🟢 本地快取就緒 (雲端連線過慢)" : "⚠️ 離線快取模式，貼入 Token 可連線";
             statusEl.style.color = "#d97706";
         } finally {
-            // 保證100%會渲染地圖與解鎖畫面
             render();
             updateAutoCodeField();
         }
@@ -1358,7 +1356,7 @@
                         <option value="5" ${p.rating==='5'?'selected':''}>⭐⭐⭐⭐⭐ (5星 - 極力推薦)</option>
                         <option value="4" ${p.rating==='4'?'selected':''}>⭐⭐⭐⭐ (4星 - 滿意考慮)</option>
                         <option value="3" ${p.rating==='3'?'selected':''}>⭐⭐⭐ (3星 - 普通尚可)</option>
-                        <option value="2" ${p.rating==='2'?'selected':''}>⭐⭐ (2星 - 缺點偏多)</option>
+                        <option value="2" ${p.rating==='2'?'selected':''}>⭐⭐ (2星 - 考慮度低)</option>
                         <option value="1" ${p.rating==='1'?'selected':''}>⭐ (1星 - 不考慮)</option>
                     </select>
                 </div>
