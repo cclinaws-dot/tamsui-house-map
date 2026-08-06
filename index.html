@@ -833,7 +833,7 @@
             }));
     }
 
-    // ⚡ 100% 雲端優先速讀引擎 (修復 F5 復原與卡死防護)
+    // ⚡ 防死鎖、3 秒強行逾時防卡死載入引擎
     async function fetchGitHubData() {
         const statusEl = document.getElementById('syncStatus');
         statusEl.innerText = "⏳ 正在讀取雲端資料...";
@@ -844,8 +844,19 @@
             document.getElementById('githubToken').value = token;
         }
 
+        // 先優先載入 LocalStorage 呈現畫面，防止死白
+        const localData = localStorage.getItem('淡水看房地圖資料');
+        if (localData) {
+            try { properties = JSON.parse(localData); } catch(e){}
+        }
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3000); // 3秒強行超時
+
         try {
-            const response = await fetch(`./${GITHUB_FILE_PATH}?t=${Date.now()}`);
+            const response = await fetch(`./${GITHUB_FILE_PATH}?t=${Date.now()}`, { signal: controller.signal });
+            clearTimeout(timeoutId);
+
             if (response.ok) {
                 const cloudData = await response.json();
                 properties = cloudData;
@@ -853,19 +864,17 @@
                 
                 statusEl.innerText = token ? "🟢 雲端同步連線正常 (來自 GitHub)" : "⚠️ 未設定 Token，只能讀取無法同步存檔";
                 statusEl.style.color = token ? "#166534" : "#d97706";
-            } else {
-                throw new Error("找不到 data.json");
             }
         } catch (e) {
-            console.warn("讀取雲端失敗，降級使用 LocalStorage:", e);
-            const localData = localStorage.getItem('淡水看房地圖資料');
-            properties = localData ? JSON.parse(localData) : [];
-            statusEl.innerText = "⚠️ 離線備份模式";
+            clearTimeout(timeoutId);
+            console.warn("連線超時或出錯，強制解鎖畫面使用快取：", e);
+            statusEl.innerText = token ? "🟢 本地快取就緒 (雲端連線過慢)" : "⚠️ 離線快取模式，貼入 Token 可連線";
             statusEl.style.color = "#d97706";
+        } finally {
+            // 保證100%會渲染地圖與解鎖畫面
+            render();
+            updateAutoCodeField();
         }
-
-        render();
-        updateAutoCodeField();
     }
 
     async function pushToGitHub() {
@@ -963,7 +972,6 @@
     };
 
     function initMap() {
-        // 全台雙北通用中心視角預設值
         map = L.map('map').setView([25.0478, 121.5170], 12);
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
