@@ -550,7 +550,6 @@
         }
     }
 
-    // 📋 自動拆解 FB/591 複製文字正則引擎
     function parseSmartPasteText() {
         const text = document.getElementById('smartPasteText').value.trim();
         if (!text) {
@@ -833,7 +832,7 @@
             }));
     }
 
-    // ⚡ 防死鎖、3 秒強行逾時防卡死載入引擎
+    // ⚡ 100% 解決 GitHub Pages 快取的速讀引擎
     async function fetchGitHubData() {
         const statusEl = document.getElementById('syncStatus');
         statusEl.innerText = "⏳ 正在讀取雲端資料...";
@@ -844,30 +843,28 @@
             document.getElementById('githubToken').value = token;
         }
 
+        // 先優先讀取 LocalStorage 快取，瞬間顯示內容
         const localData = localStorage.getItem('淡水看房地圖資料');
         if (localData) {
             try { properties = JSON.parse(localData); } catch(e){}
         }
 
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 3000);
-
         try {
-            const response = await fetch(`./${GITHUB_FILE_PATH}?t=${Date.now()}`, { signal: controller.signal });
-            clearTimeout(timeoutId);
+            // 直接抓 GitHub Raw API，繞過 GitHub Pages CDN 快取的干擾
+            const rawUrl = `https://raw.githubusercontent.com/${GITHUB_REPO}/main/${GITHUB_FILE_PATH}?t=${Date.now()}`;
+            const response = await fetch(rawUrl);
 
             if (response.ok) {
                 const cloudData = await response.json();
                 properties = cloudData;
                 localStorage.setItem('淡水看房地圖資料', JSON.stringify(properties));
                 
-                statusEl.innerText = token ? "🟢 雲端同步連線正常 (來自 GitHub)" : "⚠️ 未設定 Token，只能讀取無法同步存檔";
+                statusEl.innerText = token ? "🟢 雲端同步連線正常 (來自 GitHub Raw)" : "⚠️ 未設定 Token，只能讀取無法同步存檔";
                 statusEl.style.color = token ? "#166534" : "#d97706";
             }
         } catch (e) {
-            clearTimeout(timeoutId);
-            console.warn("連線超時或出錯，強制解鎖畫面使用快取：", e);
-            statusEl.innerText = token ? "🟢 本地快取就緒 (雲端連線過慢)" : "⚠️ 離線快取模式，貼入 Token 可連線";
+            console.warn("讀取 API 失敗，降級使用 LocalStorage 快取:", e);
+            statusEl.innerText = "⚠️ 離線快取模式";
             statusEl.style.color = "#d97706";
         } finally {
             render();
