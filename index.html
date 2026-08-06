@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>淡水 - 電子互動地圖看房登錄系統</title>
     
+    <!-- Leaflet CSS (地圖樣式) -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     
     <style>
@@ -14,6 +15,7 @@
             --warning: #eab308;
             --danger: #ef4444;
             --purple: #8b5cf6;
+            --orange: #f97316;
             --gray: #64748b;
             --bg: #f8fafc;
         }
@@ -118,18 +120,22 @@
     <h1>🗺️ 淡水 - 電子互動地圖看房系統</h1>
 </div>
 
+<!-- 地圖選點模式提示條 -->
 <div id="mapPickerNotice">
     <span>📍 請直接在左側地圖上點擊該物件的正確位置...</span>
     <button onclick="cancelMapPick()" style="background:#ef4444; color:white; border:none; padding:4px 10px; border-radius:15px; cursor:pointer; font-size:0.85rem;">取消選點</button>
 </div>
 
 <div class="main-layout">
+    <!-- 左側：地圖 -->
     <div class="card">
         <h2>📍 淡水區互動地圖 (點選標籤可快速看詳情)</h2>
         <div id="map"></div>
     </div>
 
+    <!-- 右側：完整表單與資料庫 -->
     <div>
+        <!-- ☁️ GitHub 雲端同步設定與狀態槓 -->
         <div class="github-config">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                 <b>☁️ GitHub 雲端資料庫狀態：</b>
@@ -144,6 +150,7 @@
         <div class="card">
             <h2>📝 新增物件紀錄</h2>
 
+            <!-- 📋 快速貼上文字自動拆解區塊 -->
             <div class="smart-paste-box">
                 <div style="font-weight:bold; color:#86198f; margin-bottom:6px;">📋 貼上 FB / 591 售屋全文，一鍵自動拆解填表：</div>
                 <textarea id="smartPasteText" rows="3" placeholder="請將 FB 社團或 591 複製的完整物件內文貼至此處..."></textarea>
@@ -164,7 +171,9 @@
                             <option value="🟡 保留觀察">🟡 保留觀察</option>
                             <option value="🟢 優先考慮">🟢 優先考慮</option>
                             <option value="🔴 直接排除">🔴 直接排除</option>
-                            <option value="❌ 已售出/已下架">❌ 已售出/已下架</option>
+                            <option value="🔒 封盤中 (談判中)">🔒 封盤中 (談判中)</option>
+                            <option value="❌ 已售出 / 已成交">❌ 已售出 / 已成交</option>
+                            <option value="🚫 已下架">🚫 已下架</option>
                         </select>
                     </div>
 
@@ -194,6 +203,7 @@
                         </div>
                     </div>
 
+                    <!-- 🌐 網路收藏擴充欄位 -->
                     <div class="form-group full" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 0;">
                         <div class="form-group">
                             <label>🔗 網路來源網址 (591/FB等)</label>
@@ -245,7 +255,6 @@
                     <div class="form-group">
                         <label>房屋朝向 (主要採光面)</label>
                         <select id="orientation">
-                            <option value="未知/待確認" selected>❓ 未知 / 待確認</option>
                             <option value="朝南/西南">☀️ 朝南 / 西南 (溫暖採光佳)</option>
                             <option value="朝東/東南">🌅 朝東 / 東南 (順採光)</option>
                             <option value="朝北/東北">❄️ 朝北 / 東北 (淡水風大)</option>
@@ -265,10 +274,11 @@
                         </div>
                         <div class="form-group">
                             <label>換算開價單價 (萬/坪)</label>
-                            <input type="number" step="0.001" id="unitPrice" placeholder="例: 32.857">
+                            <input type="number" step="0.1" id="unitPrice" placeholder="例: 32.8">
                         </div>
                     </div>
 
+                    <!-- 💰 房貸計算試算區塊 -->
                     <div class="form-group full calc-box">
                         <div class="calc-title">💰 房貸與自備款自動試算</div>
                         <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:8px;">
@@ -324,6 +334,7 @@
                         <input type="number" id="mgmtFee" placeholder="例: 2450">
                     </div>
 
+                    <!-- 📐 坪數三個欄位併為一列 (3欄式) -->
                     <div class="form-group full" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 0;">
                         <div class="form-group">
                             <label>權狀總坪數</label>
@@ -411,6 +422,7 @@
                     </div>
                 </div>
 
+                <!-- 🎙️ 現場語音筆記與備註 -->
                 <div class="form-group" style="margin-top:8px;">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
                         <label style="margin:0;">個人心得與其他備註</label>
@@ -429,6 +441,7 @@
         <div class="card">
             <h2>📋 已紀錄物件資料庫</h2>
             
+            <!-- 🔍 關鍵字搜尋與金額過濾區塊 -->
             <div style="background:#f1f5f9; padding:12px; border-radius:8px; margin-bottom:12px;">
                 <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:8px;">
                     <div>
@@ -499,6 +512,7 @@
     <div class="img-counter" id="imgCounter">1 / 1</div>
 </div>
 
+<!-- Leaflet JS -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <script>
@@ -1062,7 +1076,8 @@
                 else if ((p.status || '').includes("🟢")) bgColor = "#22c55e";
                 else if ((p.status || '').includes("🟡")) bgColor = "#eab308";
                 else if ((p.status || '').includes("🔴")) bgColor = "#ef4444";
-                else if ((p.status || '').includes("已售出") || (p.status || '').includes("已下架")) bgColor = "#64748b";
+                else if ((p.status || '').includes("封盤")) bgColor = "#f97316"; // 橘紅色代表封盤談判中
+                else if ((p.status || '').includes("已售出") || (p.status || '').includes("已成交") || (p.status || '').includes("已下架")) bgColor = "#64748b"; // 灰底代表售出/下架
 
                 const customIcon = L.divIcon({
                     className: 'custom-pin',
@@ -1323,7 +1338,9 @@
                         <option value="🟡 保留觀察" ${p.status==='🟡 保留觀察'?'selected':''}>🟡 保留觀察</option>
                         <option value="🟢 優先考慮" ${p.status==='🟢 優先考慮'?'selected':''}>🟢 優先考慮</option>
                         <option value="🔴 直接排除" ${p.status==='🔴 直接排除'?'selected':''}>🔴 直接排除</option>
-                        <option value="❌ 已售出/已下架" ${p.status==='❌ 已售出/已下架'?'selected':''}>❌ 已售出/已下架</option>
+                        <option value="🔒 封盤中 (談判中)" ${p.status==='🔒 封盤中 (談判中)'?'selected':''}>🔒 封盤中 (談判中)</option>
+                        <option value="❌ 已售出 / 已成交" ${p.status==='❌ 已售出 / 已成交'?'selected':''}>❌ 已售出 / 已成交</option>
+                        <option value="🚫 已下架" ${p.status==='🚫 已下架'?'selected':''}>🚫 已下架</option>
                     </select>
                 </div>
 
@@ -1386,7 +1403,6 @@
 
                 <div class="form-group"><label>朝向</label>
                     <select id="e_orientation">
-                        <option value="未知/待確認" ${(!p.orientation || p.orientation==='未知/待確認')?'selected':''}>❓ 未知/待確認</option>
                         <option value="朝南/西南" ${p.orientation==='朝南/西南'?'selected':''}>☀️ 朝南/西南</option>
                         <option value="朝東/東南" ${p.orientation==='朝東/東南'?'selected':''}>🌅 朝東/東南</option>
                         <option value="朝北/東北" ${p.orientation==='朝北/東北'?'selected':''}>❄️ 朝北/東北</option>
@@ -1397,9 +1413,10 @@
 
                 <div class="form-group full" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 0;">
                     <div class="form-group"><label>開價 (萬)</label><input type="number" id="e_price" value="${p.price || ''}" oninput="calculateMortgage('edit')"></div>
-                    <div class="form-group"><label>換算開價單價 (萬/坪)</label><input type="number" step="0.001" id="e_unitPrice" value="${p.unitPrice || ''}"></div>
+                    <div class="form-group"><label>換算開價單價 (萬/坪)</label><input type="number" step="0.1" id="e_unitPrice" value="${p.unitPrice || ''}"></div>
                 </div>
 
+                <!-- 💰 編輯 Modal 的房貸計算器 -->
                 <div class="form-group full calc-box">
                     <div class="calc-title">💰 房貸與自備款自動試算</div>
                     <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:8px;">
@@ -1419,6 +1436,7 @@
                 <div class="form-group"><label>屋齡 (年)</label><input type="number" step="0.1" id="e_age" value="${p.age || ''}"></div>
                 <div class="form-group"><label>預估房屋管理費 (元/月)</label><input type="number" id="e_mgmtFee" value="${p.mgmtFee || ''}"></div>
 
+                <!-- 📐 編輯 modal 坪數三個欄位併為一列 (3欄式) -->
                 <div class="form-group full" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 0;">
                     <div class="form-group"><label>權狀總坪數</label><input type="number" step="0.01" id="e_totalPing" value="${p.totalPing || ''}" oninput="autoCalcTargetPrice('edit')"></div>
                     <div class="form-group"><label>主+附坪數 (室內)</label><input type="number" step="0.01" id="e_innerPing" value="${p.innerPing || ''}"></div>
@@ -1448,7 +1466,7 @@
             <div class="form-group">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
                     <label style="margin:0;">修改心得筆記</label>
-                    <button type="button" class="btn" onclick="startSpeechRecognition('e_notes')" style="padding:3px 8px; font-size:0.78rem; background:#8b5cf6;">🎙️ 語音轉文字筆记</button>
+                    <button type="button" class="btn" onclick="startSpeechRecognition('e_notes')" style="padding:3px 8px; font-size:0.78rem; background:#8b5cf6;">🎙️ 語音轉文字筆記</button>
                 </div>
                 <textarea id="e_notes" rows="3">${p.notes || ''}</textarea>
             </div>
