@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>淡水 - 電子互動地圖看房登錄系統</title>
+    <title>電子互動地圖看房登錄系統</title>
     
     <!-- Leaflet CSS (地圖樣式) -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -117,7 +117,7 @@
 <body>
 
 <div class="header">
-    <h1>🗺️ 淡水 - 電子互動地圖看房系統</h1>
+    <h1>🗺️ 電子互動地圖看房系統</h1>
 </div>
 
 <!-- 地圖選點模式提示條 -->
@@ -129,7 +129,7 @@
 <div class="main-layout">
     <!-- 左側：地圖 -->
     <div class="card">
-        <h2>📍 淡水區互動地圖 (點選標籤可快速看詳情)</h2>
+        <h2>📍 跨區互動地圖 (點選標籤可快速看詳情)</h2>
         <div id="map"></div>
     </div>
 
@@ -195,9 +195,9 @@
                     </div>
 
                     <div class="form-group full">
-                        <label>📍 詳細地址 (或直接填社區名)</label>
+                        <label>📍 詳細地址 (包含縣市行政區，或填社區名)</label>
                         <div style="display:flex; gap:6px;">
-                            <input type="text" id="address" placeholder="例: 淡水區新民街322巷4號 或 台北灣">
+                            <input type="text" id="address" placeholder="例: 新北市淡水區新民街322巷4號 或 汐止區新台五路">
                             <button type="button" class="btn" onclick="geocodeAddress('new')" style="padding:6px 10px; font-size:0.8rem; white-space:nowrap; background:#475569;">🔍 自動定位</button>
                             <button type="button" class="btn" onclick="getGPSLocation('new')" style="padding:6px 10px; font-size:0.8rem; white-space:nowrap; background:#059669;">📱 GPS定位</button>
                         </div>
@@ -257,7 +257,7 @@
                         <select id="orientation">
                             <option value="朝南/西南">☀️ 朝南 / 西南 (溫暖採光佳)</option>
                             <option value="朝東/東南">🌅 朝東 / 東南 (順採光)</option>
-                            <option value="朝北/東北">❄️ 朝北 / 東北 (淡水風大)</option>
+                            <option value="朝北/東北">❄️ 朝北 / 東北</option>
                             <option value="朝西/西北">🌇 朝西 / 西北 (注意西曬)</option>
                         </select>
                     </div>
@@ -371,11 +371,11 @@
                         </div>
                         <div class="category-title pros-title">🏢 社區與交通加分</div>
                         <div class="checklist-grid">
-                            <label class="check-item pro-item"><input type="checkbox" name="pros" value="近輕軌/公車站"> 近輕軌 / 公車站 (步行5-10分內)</label>
+                            <label class="check-item pro-item"><input type="checkbox" name="pros" value="近捷運/輕軌/公車站"> 近捷運 / 輕軌 / 公車站</label>
                             <label class="check-item pro-item"><input type="checkbox" name="pros" value="坡道平面車位"> 坡道平面車位 (好停)</label>
                             <label class="check-item pro-item"><input type="checkbox" name="pros" value="低公設比/室內大"> 低公設比 / 室內實用坪數大</label>
                             <label class="check-item pro-item"><input type="checkbox" name="pros" value="24H管理/垃圾集中"> 24H 管理 / 垃圾集中處理</label>
-                            <label class="check-item pro-item"><input type="checkbox" name="pros" value="生活機能極佳"> 近商圈 / 家樂福 / 學區機能佳</label>
+                            <label class="check-item pro-item"><input type="checkbox" name="pros" value="生活機能極佳"> 近商圈 / 賣場 / 學區機能佳</label>
                         </div>
                     </div>
                 </div>
@@ -446,7 +446,7 @@
                 <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:8px;">
                     <div>
                         <label>🔍 關鍵字搜尋</label>
-                        <input type="text" id="searchInput" placeholder="輸入街名、社區名、平車..." oninput="render()">
+                        <input type="text" id="searchInput" placeholder="輸入區域、路名、社區名、平車..." oninput="render()">
                     </div>
                     <div>
                         <label>💰 最高開價上限: <span id="priceValue" style="color:#2563eb; font-weight:bold;">不限</span></label>
@@ -582,7 +582,7 @@
         const ageMatch = text.match(/屋齡[\s｜:|：]*約?[\s]*(\d+(?:\.\d+)?)\s*年/i);
         if (ageMatch) document.getElementById('age').value = ageMatch[1];
 
-        const addrMatch = text.match(/(新北市淡水區[^\n\r,，]+|淡水區[^\n\r,，]+|新春街[^\n\r,，]+|濱海路[^\n\r,，]+|沙崙路[^\n\r,，]+|新民街[^\n\r,，]+)/i);
+        const addrMatch = text.match(/([一-龥]{2,3}[市縣][一-龥]{2,4}[區市鎮鄉][^\n\r,，]+|[一-龥]{2,4}[區市鎮鄉][^\n\r,，]+|[一-龥]+路[^\n\r,，]+|[一-龥]+街[^\n\r,，]+)/i);
         if (addrMatch) document.getElementById('address').value = addrMatch[1].trim();
 
         const nameMatch = text.match(/(?:社區名稱|案名|📍)[\s｜:|：]*([^\n\r]+)/i);
@@ -774,17 +774,16 @@
         }
 
         let cleanText = rawInput.replace(/大庄里|中興里|水興里|竿蓁里|坎頂里/g, '').trim();
-        let searchQueries = [];
+        let searchQueries = [cleanText];
 
-        if (cleanText.includes('淡水')) searchQueries.push(cleanText);
-        else {
-            searchQueries.push(`新北市淡水區${cleanText}`);
-            searchQueries.push(`淡水 ${cleanText}`);
+        if (!cleanText.includes('市') && !cleanText.includes('縣')) {
+            searchQueries.push(`新北市${cleanText}`);
+            searchQueries.push(`台北市${cleanText}`);
         }
 
         if (cleanText.includes('樓') || cleanText.includes('F')) {
             let noFloor = cleanText.split(/[0-9]+樓|[0-9]+F/i)[0].trim();
-            if (noFloor) searchQueries.push(noFloor.includes('淡水') ? noFloor : `淡水 ${noFloor}`);
+            if (noFloor) searchQueries.push(noFloor);
         }
 
         let foundResult = null;
@@ -953,7 +952,7 @@
 
     const allProsGrouped = {
         "📐 空間與屋況加分": ["格局方正/無過道浪費", "採光明亮/通風佳", "屋況維持佳免大整理", "衛浴/廚具屋況良好", "衛浴皆有開窗", "景觀極佳/棟距大"],
-        "🏢 社區與交通加分": ["近輕軌/公車站", "坡道平面車位", "低公設比/室內大", "24H管理/垃圾集中", "生活機能極佳"]
+        "🏢 社區與交通加分": ["近捷運/輕軌/公車站", "坡道平面車位", "低公設比/室內大", "24H管理/垃圾集中", "生活機能極佳"]
     };
 
     const allConsGrouped = {
@@ -964,7 +963,8 @@
     };
 
     function initMap() {
-        map = L.map('map').setView([25.1910, 121.4400], 14);
+        // 全台雙北通用中心視角預設值
+        map = L.map('map').setView([25.0478, 121.5170], 12);
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19, attribution: '© OpenStreetMap'
@@ -1076,8 +1076,8 @@
                 else if ((p.status || '').includes("🟢")) bgColor = "#22c55e";
                 else if ((p.status || '').includes("🟡")) bgColor = "#eab308";
                 else if ((p.status || '').includes("🔴")) bgColor = "#ef4444";
-                else if ((p.status || '').includes("封盤")) bgColor = "#f97316"; // 橘紅色代表封盤談判中
-                else if ((p.status || '').includes("已售出") || (p.status || '').includes("已成交") || (p.status || '').includes("已下架")) bgColor = "#64748b"; // 灰底代表售出/下架
+                else if ((p.status || '').includes("封盤")) bgColor = "#f97316";
+                else if ((p.status || '').includes("已售出") || (p.status || '').includes("已成交") || (p.status || '').includes("已下架")) bgColor = "#64748b";
 
                 const customIcon = L.divIcon({
                     className: 'custom-pin',
@@ -1559,8 +1559,8 @@
             pros: selectedPros,
             cons: selectedCons,
             notes: document.getElementById('notes').value,
-            lat: document.getElementById('lat').value || 25.1930,
-            lng: document.getElementById('lng').value || 121.4370
+            lat: document.getElementById('lat').value || 25.0478,
+            lng: document.getElementById('lng').value || 121.5170
         };
 
         properties.push(newP);
@@ -1598,7 +1598,7 @@
         const encodedUri = encodeURI(csvContent);
         const link = document.createElement("a");
         link.setAttribute("href", encodedUri);
-        link.setAttribute("download", "淡水看房電子地圖紀錄.csv");
+        link.setAttribute("download", "看房電子地圖紀錄.csv");
         document.body.appendChild(link);
         link.click();
     }
