@@ -38,8 +38,10 @@
         /* 地圖選擇模式提示條 */
         #mapPickerNotice { display: none; position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #2563eb; color: white; padding: 12px 24px; border-radius: 30px; font-weight: bold; font-size: 1rem; box-shadow: 0 10px 25px rgba(0,0,0,0.3); z-index: 10001; align-items: center; gap: 15px; }
 
-        /* 文字快速拆解區塊 */
+        /* 多筆自動拆解專用區塊 */
         .smart-paste-box { background: #fdf4ff; border: 1px solid #f5d0fe; border-radius: 8px; padding: 12px; margin-bottom: 15px; font-size: 0.85rem; }
+        .batch-card { background: #ffffff; border: 2px dashed #c084fc; border-radius: 8px; padding: 12px; margin-top: 10px; }
+        .batch-card-header { font-weight: bold; color: #7e22ce; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid #f3e8ff; padding-bottom: 4px; }
 
         /* 表單格線 */
         .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -66,7 +68,7 @@
         .img-thumb-wrap .btn-del-img { position: absolute; top: 2px; right: 2px; background: rgba(239, 68, 68, 0.85); color: white; border: none; border-radius: 50%; width: 18px; height: 18px; font-size: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
 
         /* 優缺點勾選區 */
-        .checklist-container { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; max-height: 200px; overflow-y: auto; }
+        .checklist-container { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; max-height: 250px; overflow-y: auto; }
         .checklist-container.pros-bg { background: #f0fdf4; border-color: #bbf7d0; }
         .category-title { font-size: 0.8rem; font-weight: bold; color: var(--primary); margin: 8px 0 4px 0; border-bottom: 1px dashed #cbd5e1; padding-bottom: 2px; }
         .category-title.pros-title { color: #166534; border-color: #86efac; }
@@ -76,6 +78,9 @@
         .check-item { display: flex; align-items: center; gap: 5px; font-size: 0.8rem; color: #334155; cursor: pointer; }
         .check-item input[type="checkbox"] { width: 15px; height: 15px; accent-color: var(--primary); }
         .check-item.pro-item input[type="checkbox"] { accent-color: var(--success); }
+
+        /* 自訂新增區塊 */
+        .custom-add-bar { display: flex; gap: 6px; margin-top: 10px; padding-top: 8px; border-top: 1px dashed #cbd5e1; }
 
         .btn { background: var(--primary); color: white; border: none; padding: 10px 14px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 0.9rem; }
         .btn-export { background: #475569; margin-top: 8px; width: 100%; }
@@ -148,13 +153,17 @@
         </div>
 
         <div class="card">
-            <h2>📝 新增物件紀錄</h2>
+            <h2>📝 新增物件紀錄 (支援多筆一次貼上拆解)</h2>
 
             <!-- 📋 快速貼上文字自動拆解區塊 -->
             <div class="smart-paste-box">
-                <div style="font-weight:bold; color:#86198f; margin-bottom:6px;">📋 貼上 FB / 591 售屋全文，一鍵自動拆解填表：</div>
-                <textarea id="smartPasteText" rows="3" placeholder="請將 FB 社團或 591 複製的完整物件內文貼至此處..."></textarea>
-                <button type="button" class="btn" onclick="parseSmartPasteText()" style="width:100%; margin-top:6px; background:#a855f7;">⚡ 自動拆解內文並填入下方欄位</button>
+                <div style="font-weight:bold; color:#86198f; margin-bottom:4px;">📋 貼上 FB / 591 售屋內文：</div>
+                <div style="font-size:0.78rem; color:#6b21a8; margin-bottom:6px;">💡 貼上多筆物件時，請在物件之間輸入 <b>---</b> (三個減號) 即可自動拆成多張卡片！</div>
+                <textarea id="smartPasteText" rows="4" placeholder="例：&#10;物件一內文...&#10;---&#10;物件二內文..."></textarea>
+                <button type="button" class="btn" onclick="parseSmartPasteTextBatch()" style="width:100%; margin-top:6px; background:#a855f7;">⚡ 批次自動拆解成獨立卡片</button>
+                
+                <!-- 批次拆解出來的卡片容器 -->
+                <div id="batchPreviewArea"></div>
             </div>
 
             <form id="houseForm" onsubmit="saveProperty(event)">
@@ -361,7 +370,7 @@
                     <label style="color:#166534;">🌟 常見優點 / 亮點快速勾選</label>
                     <div class="checklist-container pros-bg">
                         <div class="category-title pros-title">📐 空間與屋況加分</div>
-                        <div class="checklist-grid">
+                        <div class="checklist-grid" id="newProsGridSpace">
                             <label class="check-item pro-item"><input type="checkbox" name="pros" value="格局方正/無過道浪費"> 格局方正 / 無過道浪費</label>
                             <label class="check-item pro-item"><input type="checkbox" name="pros" value="採光明亮/通風佳"> 雙面/三面採光明亮、通風佳</label>
                             <label class="check-item pro-item"><input type="checkbox" name="pros" value="屋況維持佳免大整理"> 屋況維持佳 / 免大整理</label>
@@ -370,12 +379,20 @@
                             <label class="check-item pro-item"><input type="checkbox" name="pros" value="景觀極佳/棟距大"> 景觀視野極佳 / 棟距大無遮蔽</label>
                         </div>
                         <div class="category-title pros-title">🏢 社區與交通加分</div>
-                        <div class="checklist-grid">
+                        <div class="checklist-grid" id="newProsGridCommunity">
                             <label class="check-item pro-item"><input type="checkbox" name="pros" value="近捷運/輕軌/公車站"> 近捷運 / 輕軌 / 公車站</label>
                             <label class="check-item pro-item"><input type="checkbox" name="pros" value="坡道平面車位"> 坡道平面車位 (好停)</label>
                             <label class="check-item pro-item"><input type="checkbox" name="pros" value="低公設比/室內大"> 低公設比 / 室內實用坪數大</label>
                             <label class="check-item pro-item"><input type="checkbox" name="pros" value="24H管理/垃圾集中"> 24H 管理 / 垃圾集中處理</label>
                             <label class="check-item pro-item"><input type="checkbox" name="pros" value="生活機能極佳"> 近商圈 / 賣場 / 學區機能佳</label>
+                        </div>
+                        <div class="category-title pros-title" id="customProsTitle" style="display:none;">✨ 自訂新增優點</div>
+                        <div class="checklist-grid" id="customProsGrid"></div>
+                        
+                        <!-- 手動新增優點輸入列 -->
+                        <div class="custom-add-bar">
+                            <input type="text" id="customProInput" placeholder="輸入其他優點 (例: 近傳統市場、送裝潢)" style="padding:4px 8px; font-size:0.8rem;" onkeydown="if(event.key==='Enter'){event.preventDefault();addCustomCheckItem('pro', 'new');}">
+                            <button type="button" class="btn" onclick="addCustomCheckItem('pro', 'new')" style="padding:4px 10px; font-size:0.8rem; background:#166534; white-space:nowrap;">+ 新增優點</button>
                         </div>
                     </div>
                 </div>
@@ -419,6 +436,15 @@
                             <label class="check-item"><input type="checkbox" name="cons" value="風切大/潮濕"> 體感風切大 / 潮濕風強</label>
                             <label class="check-item"><input type="checkbox" name="cons" value="鄰近空地(未來擋採光)"> 鄰近空地 / 舊建案 (未來擋採光)</label>
                         </div>
+
+                        <div class="category-title" id="customConsTitle" style="display:none; color:#991b1b;">⚠️ 自訂新增抗性</div>
+                        <div class="checklist-grid" id="customConsGrid"></div>
+
+                        <!-- 手動新增抗性輸入列 -->
+                        <div class="custom-add-bar">
+                            <input type="text" id="customConInput" placeholder="輸入其他抗性 (例: 無垃圾處理、臨高架橋)" style="padding:4px 8px; font-size:0.8rem;" onkeydown="if(event.key==='Enter'){event.preventDefault();addCustomCheckItem('con', 'new');}">
+                            <button type="button" class="btn" onclick="addCustomCheckItem('con', 'new')" style="padding:4px 10px; font-size:0.8rem; background:#991b1b; white-space:nowrap;">+ 新增抗性</button>
+                        </div>
                     </div>
                 </div>
 
@@ -434,7 +460,7 @@
                 <input type="hidden" id="lat">
                 <input type="hidden" id="lng">
 
-                <button type="submit" class="btn" style="width:100%;">💾 儲存物件紀錄 (同步至 GitHub)</button>
+                <button type="submit" class="btn" style="width:100%;">💾 儲存單筆物件紀錄 (同步至 GitHub)</button>
             </form>
         </div>
 
@@ -516,7 +542,11 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <script>
-    const GITHUB_REPO = "cclinaws-dot/tamsui-house-map";
+    // 自動取得當前專案 Repo 名稱
+    const pathParts = window.location.pathname.split('/').filter(Boolean);
+    const GITHUB_REPO_NAME = pathParts.length > 0 ? pathParts[0] : 'house-map';
+    const GITHUB_USER = 'cclinaws-dot';
+    const GITHUB_REPO = `${GITHUB_USER}/${GITHUB_REPO_NAME}`;
     const GITHUB_FILE_PATH = "data.json";
 
     let properties = [];
@@ -530,6 +560,9 @@
     let map, mapMarkers = [];
     let tempMarker = null;
     let isMapPickingMode = false;
+
+    // 暫存批次拆解出來的物件列表
+    let parsedBatchItems = [];
 
     document.addEventListener("DOMContentLoaded", function() {
         const savedToken = localStorage.getItem('github_token');
@@ -550,61 +583,248 @@
         }
     }
 
-    function parseSmartPasteText() {
-        const text = document.getElementById('smartPasteText').value.trim();
-        if (!text) {
-            alert("請先將 FB 社團或 591 複製的文字貼入文字框！");
-            return;
-        }
+    // 動態新增自訂優優點或抗性
+    function addCustomCheckItem(type, mode) {
+        const inputId = type === 'pro' 
+            ? (mode === 'new' ? 'customProInput' : 'e_customProInput') 
+            : (mode === 'new' ? 'customConInput' : 'e_customConInput');
+        const gridId = type === 'pro' 
+            ? (mode === 'new' ? 'customProsGrid' : 'e_customProsGrid') 
+            : (mode === 'new' ? 'customConsGrid' : 'e_customConsGrid');
+        const titleId = type === 'pro' 
+            ? (mode === 'new' ? 'customProsTitle' : 'e_customProsTitle') 
+            : (mode === 'new' ? 'customConsTitle' : 'e_customConsTitle');
+        const nameAttr = type === 'pro' 
+            ? (mode === 'new' ? 'pros' : 'editPros') 
+            : (mode === 'new' ? 'cons' : 'editCons');
+
+        const inputEl = document.getElementById(inputId);
+        const val = inputEl.value.trim();
+        if (!val) return;
+
+        const gridEl = document.getElementById(gridId);
+        const titleEl = document.getElementById(titleId);
+
+        if (titleEl) titleEl.style.display = 'block';
+
+        const label = document.createElement('label');
+        label.className = `check-item ${type === 'pro' ? 'pro-item' : ''}`;
+        label.innerHTML = `<input type="checkbox" name="${nameAttr}" value="${val}" checked> ${val}`;
+        gridEl.appendChild(label);
+
+        inputEl.value = '';
+    }
+
+    // 單一文字拆解函式
+    function parseSingleText(text) {
+        let item = {
+            price: '', layout: '', totalPing: '', innerPing: '', parkingPing: '',
+            parkingType: '坡道平面', floor: '', age: '', address: '', name: '',
+            sourceUrl: '', contactInfo: '', notes: text
+        };
 
         const priceMatch = text.match(/(?:開價|售價|總價|💰|價)[\s｜:|：]*(\d+)\s*萬/i) || text.match(/(\d+)\s*萬/);
-        if (priceMatch) document.getElementById('price').value = priceMatch[1];
+        if (priceMatch) item.price = priceMatch[1];
 
         const layoutMatch = text.match(/\d+[\s]*房\([室s]\)[\s]*\d+[\s]*廳[\s]*\d+[\s]*衛/i) || text.match(/\d+[\s]*房[\s]*\d+[\s]*廳[\s]*\d+[\s]*衛/i) || text.match(/\d+[\s]*房[\s]*\d+[\s]*衛/i);
-        if (layoutMatch) document.getElementById('layout').value = layoutMatch[0].replace(/\([室s]\)/g, '');
+        if (layoutMatch) item.layout = layoutMatch[0].replace(/\([室s]\)/g, '');
 
         const totalPingMatch = text.match(/(?:建物坪數|總坪數|建物總坪|坪數)[\s｜:|：]*(\d+(?:\.\d+)?)\s*坪/i);
-        if (totalPingMatch) document.getElementById('totalPing').value = totalPingMatch[1];
+        if (totalPingMatch) item.totalPing = totalPingMatch[1];
 
         const innerPingMatch = text.match(/(?:主建物|主+附|室內)[\s｜:|：]*(\d+(?:\.\d+)?)\s*坪/i);
-        if (innerPingMatch) document.getElementById('innerPing').value = innerPingMatch[1];
+        if (innerPingMatch) item.innerPing = innerPingMatch[1];
 
         const parkingPingMatch = text.match(/(?:含車位|車位坪數|車位)[\s｜:|：]*(\d+(?:\.\d+)?)\s*坪/i);
-        if (parkingPingMatch) document.getElementById('parkingPing').value = parkingPingMatch[1];
+        if (parkingPingMatch) item.parkingPing = parkingPingMatch[1];
 
-        if (text.includes("平面")) document.getElementById('parkingType').value = "坡道平面";
-        else if (text.includes("機械")) document.getElementById('parkingType').value = "坡道機械";
+        if (text.includes("機械")) item.parkingType = "坡道機械";
 
         const floorMatch = text.match(/樓層[\s｜:|：]*(\d+[\s]*[樓F]\s*[\/／]\s*共?[\s]*\d+[\s]*[樓F])/i) || text.match(/(\d+[\s]*[樓F]\s*[\/／]\s*共?[\s]*\d+[\s]*[樓F])/i);
-        if (floorMatch) document.getElementById('floor').value = floorMatch[1].replace(/\s+/g, '');
+        if (floorMatch) item.floor = floorMatch[1].replace(/\s+/g, '');
 
         const ageMatch = text.match(/屋齡[\s｜:|：]*約?[\s]*(\d+(?:\.\d+)?)\s*年/i);
-        if (ageMatch) document.getElementById('age').value = ageMatch[1];
+        if (ageMatch) item.age = ageMatch[1];
 
         const addrMatch = text.match(/([一-龥]{2,3}[市縣][一-龥]{2,4}[區市鎮鄉][^\n\r,，]+|[一-龥]{2,4}[區市鎮鄉][^\n\r,，]+|[一-龥]+路[^\n\r,，]+|[一-龥]+街[^\n\r,，]+)/i);
-        if (addrMatch) document.getElementById('address').value = addrMatch[1].trim();
+        if (addrMatch) item.address = addrMatch[1].trim();
 
         const nameMatch = text.match(/(?:社區名稱|案名|📍)[\s｜:|：]*([^\n\r]+)/i);
         if (nameMatch) {
-            document.getElementById('name').value = nameMatch[1].replace(/【|】|🌿|✨/g, '').trim();
+            item.name = nameMatch[1].replace(/【|】|🌿|✨/g, '').trim();
         } else {
             const firstLine = text.split('\n')[0].replace(/【|】|🌿|✨|🔥/g, '').trim();
-            if (firstLine) document.getElementById('name').value = firstLine.substring(0, 30);
+            if (firstLine) item.name = firstLine.substring(0, 30);
         }
 
         const urlMatch = text.match(/(https?:\/\/[^\s]+)/i);
-        if (urlMatch) document.getElementById('sourceUrl').value = urlMatch[1];
+        if (urlMatch) item.sourceUrl = urlMatch[1];
 
         const phoneMatch = text.match(/(09\d{2}[-\s]?\d{3}[-\s]?\d{3})/);
         const agentMatch = text.match(/([一-龥]{2,4}\s*(?:房仲|有巢氏|永慶|台慶|大家房屋|房東))/i);
-        if (phoneMatch) document.getElementById('contactInfo').value = `${agentMatch ? agentMatch[1] : ''} ${phoneMatch[1]}`.trim();
+        if (phoneMatch) item.contactInfo = `${agentMatch ? agentMatch[1] : ''} ${phoneMatch[1]}`.trim();
 
-        document.getElementById('notes').value = text;
+        return item;
+    }
+
+    // ⚡ 批次自動拆解為多個卡片
+    function parseSmartPasteTextBatch() {
+        const rawText = document.getElementById('smartPasteText').value.trim();
+        if (!rawText) {
+            alert("請先將內文貼入上方文字框！");
+            return;
+        }
+
+        const rawBlocks = rawText.split(/(?:\r?\n){0,1}(?:---|=+=+)(?:\r?\n){0,1}/).filter(b => b.trim().length > 0);
+
+        if (rawBlocks.length === 1) {
+            const parsed = parseSingleText(rawBlocks[0]);
+            fillSingleForm(parsed);
+            document.getElementById('batchPreviewArea').innerHTML = '';
+            alert("⚡ 單一物件拆解完成！已直接填入下方表單欄位。");
+        } else {
+            parsedBatchItems = rawBlocks.map((blk, idx) => parseSingleText(blk));
+            renderBatchPreviewCards();
+            alert(`⚡ 成功拆解出 ${parsedBatchItems.length} 筆物件！請在下方預覽確認後匯入。`);
+        }
+    }
+
+    function fillSingleForm(item) {
+        if (item.price) document.getElementById('price').value = item.price;
+        if (item.layout) document.getElementById('layout').value = item.layout;
+        if (item.totalPing) document.getElementById('totalPing').value = item.totalPing;
+        if (item.innerPing) document.getElementById('innerPing').value = item.innerPing;
+        if (item.parkingPing) document.getElementById('parkingPing').value = item.parkingPing;
+        if (item.parkingType) document.getElementById('parkingType').value = item.parkingType;
+        if (item.floor) document.getElementById('floor').value = item.floor;
+        if (item.age) document.getElementById('age').value = item.age;
+        if (item.address) document.getElementById('address').value = item.address;
+        if (item.name) document.getElementById('name').value = item.name;
+        if (item.sourceUrl) document.getElementById('sourceUrl').value = item.sourceUrl;
+        if (item.contactInfo) document.getElementById('contactInfo').value = item.contactInfo;
+        if (item.notes) document.getElementById('notes').value = item.notes;
 
         calculateMortgage('new');
-        if (document.getElementById('address').value) geocodeAddress('new');
+        if (item.address) geocodeAddress('new');
+    }
 
-        alert("⚡ 自動拆解完成！請檢查下方欄位確認無誤。");
+    function renderBatchPreviewCards() {
+        const area = document.getElementById('batchPreviewArea');
+        area.innerHTML = '';
+
+        parsedBatchItems.forEach((item, idx) => {
+            const card = document.createElement('div');
+            card.className = 'batch-card';
+            card.innerHTML = `
+                <div class="batch-card-header">
+                    <span>🏠 物件卡片 #${idx + 1}</span>
+                    <button type="button" onclick="removeBatchItem(${idx})" style="background:#ef4444; color:white; border:none; border-radius:4px; padding:2px 8px; cursor:pointer; font-size:0.75rem;">刪除此筆</button>
+                </div>
+                <div class="form-grid">
+                    <div><label>物件名稱</label><input type="text" value="${item.name}" onchange="parsedBatchItems[${idx}].name=this.value"></div>
+                    <div><label>開價 (萬)</label><input type="number" value="${item.price}" onchange="parsedBatchItems[${idx}].price=this.value"></div>
+                    <div><label>格局</label><input type="text" value="${item.layout}" onchange="parsedBatchItems[${idx}].layout=this.value"></div>
+                    <div><label>權狀總坪</label><input type="number" step="0.01" value="${item.totalPing}" onchange="parsedBatchItems[${idx}].totalPing=this.value"></div>
+                    <div style="grid-column: span 2;"><label>詳細地址</label><input type="text" value="${item.address}" onchange="parsedBatchItems[${idx}].address=this.value"></div>
+                </div>
+                <div style="margin-top:6px; display:flex; justify-content:flex-end;">
+                    <button type="button" class="btn" onclick="importSingleBatchItem(${idx})" style="padding:4px 10px; font-size:0.8rem; background:#059669;">+ 僅加入此筆至資料庫</button>
+                </div>
+            `;
+            area.appendChild(card);
+        });
+
+        if (parsedBatchItems.length > 0) {
+            area.innerHTML += `
+                <button type="button" class="btn" onclick="importAllBatchItems()" style="width:100%; margin-top:10px; background:#2563eb;">🚀 一鍵全部匯入並同步至 GitHub (${parsedBatchItems.length} 筆)</button>
+            `;
+        }
+    }
+
+    function removeBatchItem(idx) {
+        parsedBatchItems.splice(idx, 1);
+        renderBatchPreviewCards();
+    }
+
+    async function importSingleBatchItem(idx) {
+        const item = parsedBatchItems[idx];
+        await createAndPushItem(item);
+        parsedBatchItems.splice(idx, 1);
+        renderBatchPreviewCards();
+        alert(`✅ 已成功匯入第 ${idx + 1} 筆物件！`);
+    }
+
+    async function importAllBatchItems() {
+        if (parsedBatchItems.length === 0) return;
+        
+        for (let item of parsedBatchItems) {
+            await createAndPushItem(item, false);
+        }
+        
+        parsedBatchItems = [];
+        document.getElementById('batchPreviewArea').innerHTML = '';
+        document.getElementById('smartPasteText').value = '';
+        
+        render();
+        await pushToGitHub();
+        updateAutoCodeField();
+        alert("🎉 所有批次物件已成功匯入並同步至 GitHub！");
+    }
+
+    async function createAndPushItem(item, triggerSync = true) {
+        let lat = 25.0478;
+        let lng = 121.5170;
+
+        if (item.address) {
+            let cleanText = item.address.replace(/大庄里|中興里|水興里|竿蓁里|坎頂里/g, '').trim();
+            try {
+                const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cleanText)}`);
+                const data = await res.json();
+                if (data && data.length > 0) {
+                    lat = parseFloat(data[0].lat).toFixed(5);
+                    lng = parseFloat(data[0].lon).toFixed(5);
+                }
+            } catch (e) {}
+        }
+
+        const newP = {
+            code: getNextAutoCode(),
+            rating: "0",
+            name: item.name || "未命名物件",
+            address: item.address || "",
+            sourceUrl: item.sourceUrl || "",
+            contactInfo: item.contactInfo || "",
+            layout: item.layout || "",
+            purpose: "住家用",
+            type: "社區大樓",
+            parkingType: item.parkingType || "坡道平面",
+            orientation: "朝南/西南",
+            status: "🌐 網路收藏 (待約看)",
+            price: item.price || "",
+            unitPrice: "",
+            targetPrice: "",
+            floor: item.floor || "",
+            age: item.age || "",
+            totalPing: item.totalPing || "",
+            innerPing: item.innerPing || "",
+            parkingPing: item.parkingPing || "",
+            mgmtFee: "",
+            realPrice: "",
+            images: [],
+            pros: [],
+            cons: [],
+            notes: item.notes || "",
+            lat: lat,
+            lng: lng
+        };
+
+        properties.push(newP);
+
+        if (triggerSync) {
+            render();
+            await pushToGitHub();
+            updateAutoCodeField();
+        }
     }
 
     function updatePriceSlider(val) {
@@ -832,7 +1052,6 @@
             }));
     }
 
-    // ⚡ 100% 解決 GitHub Pages 快取的速讀引擎
     async function fetchGitHubData() {
         const statusEl = document.getElementById('syncStatus');
         statusEl.innerText = "⏳ 正在讀取雲端資料...";
@@ -843,14 +1062,12 @@
             document.getElementById('githubToken').value = token;
         }
 
-        // 先優先讀取 LocalStorage 快取，瞬間顯示內容
         const localData = localStorage.getItem('淡水看房地圖資料');
         if (localData) {
             try { properties = JSON.parse(localData); } catch(e){}
         }
 
         try {
-            // 直接抓 GitHub Raw API，繞過 GitHub Pages CDN 快取的干擾
             const rawUrl = `https://raw.githubusercontent.com/${GITHUB_REPO}/main/${GITHUB_FILE_PATH}?t=${Date.now()}`;
             const response = await fetch(rawUrl);
 
@@ -1310,6 +1527,18 @@
 
         document.getElementById('modalTitle').innerText = `✏️ 編輯：[${p.code}] ${p.name}`;
 
+        // 收集內建預設的優點與缺點選項
+        const defaultPros = [
+            "格局方正/無過道浪費", "採光明亮/通風佳", "屋況維持佳免大整理", "衛浴/廚具屋況良好", "衛浴皆有開窗", "景觀極佳/棟距大",
+            "近捷運/輕軌/公車站", "坡道平面車位", "低公設比/室內大", "24H管理/垃圾集中", "生活機能極佳"
+        ];
+        const defaultCons = [
+            "格局不方正/走道浪費", "暗廳/採光差", "房間過小(放不下雙人床)", "屋內壓樑問題", "無陽台/僅雨遮",
+            "屋況需小幅整修/清潔", "屋況差需全室大翻修", "廚具/流理台老舊需汰換", "衛浴老舊需重做", "壁癌/水痕問題",
+            "無天然瓦斯(需桶裝瓦斯/全電)", "華廈無管理員", "無集中垃圾場", "衛浴未開窗", "機械/昇降車位", "梯戶比過高",
+            "低樓層(採光/噪音/隱私)", "嚴重西曬", "臨幹道/車道上方噪音", "風切大/潮濕", "鄰近空地(未來擋採光)"
+        ];
+
         let prosGroupedHtml = '';
         for (let group in allProsGrouped) {
             prosGroupedHtml += `<div class="category-title pros-title">${group}</div><div class="checklist-grid">`;
@@ -1320,6 +1549,21 @@
             prosGroupedHtml += `</div>`;
         }
 
+        // 檢查是否有歷史自訂優點
+        const customPros = (p.pros || []).filter(pr => !defaultPros.includes(pr));
+        prosGroupedHtml += `<div class="category-title pros-title" id="e_customProsTitle" style="${customPros.length > 0 ? '' : 'display:none;'}">✨ 自訂新增優點</div>`;
+        prosGroupedHtml += `<div class="checklist-grid" id="e_customProsGrid">`;
+        customPros.forEach(pr => {
+            prosGroupedHtml += `<label class="check-item pro-item"><input type="checkbox" name="editPros" value="${pr}" checked> ${pr}</label>`;
+        });
+        prosGroupedHtml += `</div>`;
+        prosGroupedHtml += `
+            <div class="custom-add-bar">
+                <input type="text" id="e_customProInput" placeholder="輸入其他優點" style="padding:4px 8px; font-size:0.8rem;" onkeydown="if(event.key==='Enter'){event.preventDefault();addCustomCheckItem('pro', 'edit');}">
+                <button type="button" class="btn" onclick="addCustomCheckItem('pro', 'edit')" style="padding:4px 10px; font-size:0.8rem; background:#166534; white-space:nowrap;">+ 新增優點</button>
+            </div>
+        `;
+
         let consGroupedHtml = '';
         for (let group in allConsGrouped) {
             consGroupedHtml += `<div class="category-title">${group}</div><div class="checklist-grid">`;
@@ -1329,6 +1573,21 @@
             });
             consGroupedHtml += `</div>`;
         }
+
+        // 檢查是否有歷史自訂抗性
+        const customCons = (p.cons || []).filter(c => !defaultCons.includes(c));
+        consGroupedHtml += `<div class="category-title" id="e_customConsTitle" style="color:#991b1b; ${customCons.length > 0 ? '' : 'display:none;'}">⚠️ 自訂新增抗性</div>`;
+        consGroupedHtml += `<div class="checklist-grid" id="e_customConsGrid">`;
+        customCons.forEach(c => {
+            consGroupedHtml += `<label class="check-item"><input type="checkbox" name="editCons" value="${c}" checked> ${c}</label>`;
+        });
+        consGroupedHtml += `</div>`;
+        consGroupedHtml += `
+            <div class="custom-add-bar">
+                <input type="text" id="e_customConInput" placeholder="輸入其他抗性" style="padding:4px 8px; font-size:0.8rem;" onkeydown="if(event.key==='Enter'){event.preventDefault();addCustomCheckItem('con', 'edit');}">
+                <button type="button" class="btn" onclick="addCustomCheckItem('con', 'edit')" style="padding:4px 10px; font-size:0.8rem; background:#991b1b; white-space:nowrap;">+ 新增抗性</button>
+            </div>
+        `;
 
         document.getElementById('modalBody').innerHTML = `
             <div class="form-grid">
